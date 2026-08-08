@@ -1,7 +1,7 @@
 #pragma once
 
 #include "core/eoa_core.h"
-#include "reflection/eoa_reflection.h"
+// #include "reflection/eoa_reflection.h"  // Temporarily disabled for build
 
 namespace EOA
 {
@@ -12,9 +12,9 @@ namespace EOA
      * Используется для хранения глобального состояния игры,
      * менеджеров сессий, инвентаря, достижений и т.д.
      */
-    class EOA_API GameInstance : public Reflectable
+    class EOA_API GameInstance // : public Reflectable  // Temporarily disabled
     {
-        EOA_CLASS(GameInstance, "Core", "Экземпляр игры, живущий всё время работы приложения")
+        // EOA_CLASS(GameInstance, "Core", "Экземпляр игры, живущий всё время работы приложения")  // Temporarily disabled
 
     public:
         GameInstance();
