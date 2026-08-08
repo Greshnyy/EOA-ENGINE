@@ -1,5 +1,5 @@
 ```
-# Compiled and build artifacts
+# Build artifacts
 *.o
 *.obj
 *.a
@@ -8,61 +8,46 @@
 *.so
 *.dylib
 *.exe
-*.out
 
-# Build directories
+# CMake build directories
 build/
-dist/
-target/
+cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+Makefile
+compile_commands.json
 
 # Dependencies
-node_modules/
 vendor/
-third-party/
-
-# IDE and editor files
-.vscode/
-.idea/
-*.swp
-*.swo
-*.tmp
 
 # Logs
 *.log
 
-# Coverage reports
-coverage/
-htmlcov/
-.coverage
-
-# Environment variables
+# Environment
 .env
 .env.local
 *.env.*
 
-# OS generated files
+# Editor/IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 .DS_Store
 Thumbs.db
 
-# Python specific
+# Coverage
+coverage/
+htmlcov/
+.coverage
+
+# Python (in case Python files exist in the project)
 __pycache__/
 *.pyc
 *.pyo
+*.pyd
 .Python
 *.egg-info/
 .eggs/
-
-# C/C++ specific
-*.i
-*.ii
-*.s
-*.su
-*.gcda
-*.gcno
-*.gcov
-*.stackdump
-
-# Reflection and type info (if generated)
-eoa-engine/src/core/reflection_macros.h
-eoa-engine/src/core/type_info.h
 ```

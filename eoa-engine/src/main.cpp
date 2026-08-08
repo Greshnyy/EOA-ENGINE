@@ -1,73 +1,35 @@
 #include "log.h"
-#include "platform/window.h"
-#include "platform/camera.h"
-#include "rhi/vk_instance.h"
-#include "rhi/vk_device.h"
-#include "renderer/renderer.h"
-#include "editor/editor.h"
+#include "core/eoa_application.h"
 #include <chrono>
 
 int main() {
     EOA_LOG("EOA Engine starting...");
 
-#ifdef NDEBUG
-    constexpr bool kEnableValidation = false;
-#else
-    constexpr bool kEnableValidation = true;
-#endif
+    // Создаем и настраиваем конфигурацию движка
+    EOA::EngineConfig config;
+    config.Title = "EOA Engine - Editor";
+    config.Width = 1920;
+    config.Height = 1080;
+    config.Fullscreen = false;
+    config.VSync = true;
+    config.TargetFPS = 60.0f;
+    // config.StartingMap = "maps/level1.json"; // Раскомментировать для загрузки уровня
 
-    eoa::Window window(1280, 720, "Echoes Engine — Engine");
-    eoa::VulkanInstance instance(kEnableValidation);
-
-    VkSurfaceKHR surface = window.CreateSurface(instance.Handle());
-    eoa::VulkanDevice device(instance.Handle(), surface);
-
-    int fbWidth = 0, fbHeight = 0;
-    window.FramebufferSize(fbWidth, fbHeight);
-
-    eoa::Camera camera(glm::vec3(0.0f, 0.0f, -5.0f), /*yaw*/ 0.0f, /*pitch*/ -10.0f);
-
-    auto lastFrameTime = std::chrono::steady_clock::now();
-
+    // Создаем экземпляр движка
+    EOA::Engine engine;
+    
+    // Инициализируем все подсистемы
+    if (!engine.Initialize(config))
     {
-        eoa::Renderer renderer(device.Physical(), device.Logical(), surface,
-                                device.GraphicsQueueFamily(), device.GraphicsQueue(),
-                                static_cast<uint32_t>(fbWidth), static_cast<uint32_t>(fbHeight));
+        EOA_LOG_ERROR("Failed to initialize EOA Engine!");
+        return 1;
+    }
 
-        eoa::Editor editor(window.Handle(), instance.Handle(),
-                           device.Physical(), device.Logical(),
-                           device.GraphicsQueueFamily(), device.GraphicsQueue(),
-                           renderer.GetRenderPass(), 3);
-        editor.SetWorld(&renderer.GetWorld());
-        renderer.SetEditor(&editor);
-        editor.SetOnAssetActivated([&renderer](const std::string& path) {
-            renderer.LoadGltfIntoWorld(path);
-        });
+    EOA_LOG("Engine initialized successfully. Starting main loop...");
+    
+    // Запускаем главный цикл
+    engine.Run();
 
-        editor.Log("Engine started — EOA Editor");
-        editor.Log("WASD — движение, зажми ПКМ и води мышью — обзор");
-
-        while (!window.ShouldClose()) {
-            window.PollEvents();
-            window.WaitWhileMinimized();
-
-            auto now = std::chrono::steady_clock::now();
-            float deltaTime = std::chrono::duration<float>(now - lastFrameTime).count();
-            lastFrameTime = now;
-
-            editor.NewFrame();
-
-            if (!editor.WantsCaptureMouse() && !editor.WantsCaptureKeyboard()) {
-                camera.Update(window, deltaTime);
-            }
-
-            window.FramebufferSize(fbWidth, fbHeight);
-            renderer.DrawFrame(static_cast<uint32_t>(fbWidth), static_cast<uint32_t>(fbHeight),
-                                camera.ViewMatrix());
-        }
-    } // renderer + editor destroyed here (swapchain freed before surface)
-
-    vkDestroySurfaceKHR(instance.Handle(), surface, nullptr);
     EOA_LOG("Shutdown clean.");
     return 0;
 }

@@ -18,6 +18,7 @@ class Property;
 class Function;
 class Enum;
 class Class;
+class ReflectionSystem;  // Forward declaration для использования в Class
 
 // ============================================================================
 // Типы свойств для рефлексии
@@ -389,15 +390,7 @@ public:
     }
 
     // Проверка наследования
-    bool IsChildOf(const std::string& className) const {
-        if (name_ == className) return true;
-        if (parentName_.empty()) return false;
-        
-        auto parentClass = ReflectionSystem::Get().GetClass(parentName_);
-        if (!parentClass) return false;
-        
-        return parentClass->IsChildOf(className);
-    }
+    bool IsChildOf(const std::string& className) const;
 
     template<typename T>
     bool IsChildOf() const {
@@ -405,19 +398,7 @@ public:
     }
     
     // Получить все родительские классы
-    std::vector<std::string> GetAllParentClasses() const {
-        std::vector<std::string> parents;
-        std::string current = parentName_;
-        
-        while (!current.empty()) {
-            parents.push_back(current);
-            auto parentClass = ReflectionSystem::Get().GetClass(current);
-            if (!parentClass) break;
-            current = parentClass->GetParentName();
-        }
-        
-        return parents;
-    }
+    std::vector<std::string> GetAllParentClasses() const;
 
 private:
     std::string name_;
@@ -627,6 +608,37 @@ template<typename EnumType>
 std::unique_ptr<Enum> MakeEnum(const std::string& name) {
     auto enm = std::make_unique<Enum>(name);
     return enm;
+}
+
+} // namespace eoa
+
+// ============================================================================
+// Inline реализации методов Class, которые требуют полного определения ReflectionSystem
+// ============================================================================
+namespace eoa {
+
+inline bool Class::IsChildOf(const std::string& className) const {
+    if (name_ == className) return true;
+    if (parentName_.empty()) return false;
+    
+    auto parentClass = ReflectionSystem::Get().GetClass(parentName_);
+    if (!parentClass) return false;
+    
+    return parentClass->IsChildOf(className);
+}
+
+inline std::vector<std::string> Class::GetAllParentClasses() const {
+    std::vector<std::string> parents;
+    std::string current = parentName_;
+    
+    while (!current.empty()) {
+        parents.push_back(current);
+        auto parentClass = ReflectionSystem::Get().GetClass(current);
+        if (!parentClass) break;
+        current = parentClass->GetParentName();
+    }
+    
+    return parents;
 }
 
 } // namespace eoa

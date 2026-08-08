@@ -3,6 +3,7 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #include <string>
+#include <functional>
 
 namespace eoa {
 
@@ -32,10 +33,26 @@ public:
     // Блокирует, пока окно свёрнуто (размер 0x0) — ждёт события ресайза.
     void WaitWhileMinimized() const;
 
+    // --- Callbacks для ввода ---
+    using KeyCallback = std::function<void(int, int, int)>;
+    using MouseMoveCallback = std::function<void(double, double)>;
+    using MouseScrollCallback = std::function<void(double, double)>;
+    using MouseButtonCallback = std::function<void(int, int, int)>;
+
+    void SetKeyCallback(KeyCallback callback) { m_KeyCallback = callback; }
+    void SetMouseMoveCallback(MouseMoveCallback callback) { m_MouseMoveCallback = callback; }
+    void SetMouseScrollCallback(MouseScrollCallback callback) { m_MouseScrollCallback = callback; }
+    void SetMouseButtonCallback(MouseButtonCallback callback) { m_MouseButtonCallback = callback; }
+
 private:
     GLFWwindow* handle_ = nullptr;
     int width_;
     int height_;
+    
+    KeyCallback m_KeyCallback;
+    MouseMoveCallback m_MouseMoveCallback;
+    MouseScrollCallback m_MouseScrollCallback;
+    MouseButtonCallback m_MouseButtonCallback;
 };
 
 } // namespace eoa
