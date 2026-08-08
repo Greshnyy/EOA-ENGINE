@@ -1,42 +1,36 @@
 #include "core/transform_component.h"
-#include "core/reflection_macros.h"
-#include <glm/gtc/type_ptr.hpp>
+#include "reflection/eoa_reflection.h" // Добавьте этот инклуд
 
 namespace eoa {
 
-TransformComponent::TransformComponent(const std::string& name) {
-    SetName(name);
+TransformComponent::TransformComponent()
+    : position_(0.0f), rotation_(1.0f, 0.0f, 0.0f, 0.0f), scale_(1.0f) {
 }
 
-glm::mat4 TransformComponent::GetModelMatrix() {
-    if (dirty_) {
-        glm::mat4 m = glm::mat4(1.0f);
-        m = glm::translate(m, position_);
-        m = m * glm::mat4_cast(rotation_);
-        m = glm::scale(m, scale_);
-        cachedMatrix_ = m;
-        dirty_ = false;
-    }
-    return cachedMatrix_;
+void TransformComponent::OnUpdate(float deltaTime) {
+    // Логика обновления
 }
 
-glm::vec3 TransformComponent::Forward() const {
-    return glm::normalize(rotation_ * glm::vec3(0.0f, 0.0f, -1.0f));
-}
+// Функция регистрации класса
+void TransformComponent::RegisterReflection() {
+    static bool registered = false;
+    if (registered) return;
 
-glm::vec3 TransformComponent::Right() const {
-    return glm::normalize(rotation_ * glm::vec3(1.0f, 0.0f, 0.0f));
-}
+    auto info = std::make_unique<ClassInfo>("TransformComponent", []() -> Object* { return new TransformComponent(); });
+    
+    // Используем правильный синтаксис MakeProperty
+    info->AddProperty(MakeProperty<TransformComponent>(
+        "Position", PropertyType::Vec3, &TransformComponent::position_
+    ));
+    info->AddProperty(MakeProperty<TransformComponent>(
+        "Rotation", PropertyType::Quat, &TransformComponent::rotation_
+    ));
+    info->AddProperty(MakeProperty<TransformComponent>(
+        "Scale", PropertyType::Vec3, &TransformComponent::scale_
+    ));
 
-glm::vec3 TransformComponent::Up() const {
-    return glm::normalize(rotation_ * glm::vec3(0.0f, 1.0f, 0.0f));
+    ReflectionManager::Get().RegisterClass(std::move(info));
+    registered = true;
 }
-
-// Регистрация класса TransformComponent с его свойствами
-EOA_CLASS_IMPL(TransformComponent, Component)
-    EOA_PROPERTY(position_, PropertyType::Vec3)
-    EOA_PROPERTY(rotation_, PropertyType::Quat)
-    EOA_PROPERTY(scale_, PropertyType::Vec3)
-EOA_END_CLASS_IMPL()
 
 } // namespace eoa
