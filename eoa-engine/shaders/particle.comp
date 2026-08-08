@@ -1,0 +1,66 @@
+#version 450
+layout(local_size_x = 256) in;
+
+struct Particle {
+    vec4 position;  // xyz=pos, w=size
+    vec4 velocity;  // xyz=vel, w=life
+    vec4 color;
+};
+
+layout(std430, binding = 0) buffer ParticleBuffer {
+    Particle particles[];
+};
+
+layout(binding = 1) uniform EmitterParams {
+    vec4 spawnPos;
+    vec4 spawnDir;
+    float spawnRate;
+    float lifetime;
+    float deltaTime;
+    float startSize;
+    float endSize;
+    vec4 startColor;
+    vec4 endColor;
+    vec4 gravity;
+    uint maxParticles;
+    uint emitterType;
+} emitter;
+
+layout(binding = 2) buffer SpawnCounter {
+    uint deadList[];
+    uint deadCount;
+    uint aliveCount;
+};
+
+void main() {
+    uint idx = gl_GlobalInvocationID.x;
+    if (idx >= emitter.maxParticles) return;
+    
+    Particle p = particles[idx];
+    float life = p.velocity.w;
+    
+    if (life <= 0.0) {
+        // Dead particle — try to spawn
+        // Simplified: just init
+        p.position = emitter.spawnPos + vec4(
+            (float(idx % 100) - 50.0) * 0.02,
+            0,
+            (float(idx / 100) - 50.0) * 0.02,
+            0);
+        p.position.w = emitter.startSize;
+        p.velocity = emitter.spawnDir;
+        p.velocity.w = emitter.lifetime;
+        p.color = emitter.startColor;
+    } else {
+        // Alive — update
+        life -= emitter.deltaTime;
+        p.position.xyz += p.velocity.xyz * emitter.deltaTime;
+        p.velocity.xyz += emitter.gravity.xyz * emitter.deltaTime;
+        p.velocity.w = life;
+        float t = life / emitter.lifetime;
+        p.color = mix(emitter.endColor, emitter.startColor, t);
+        p.position.w = mix(emitter.endSize, emitter.startSize, t);
+        if (life <= 0.0) p.position.w = 0;
+    }
+    particles[idx] = p;
+}
