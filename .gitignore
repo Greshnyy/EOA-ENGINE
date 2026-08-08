@@ -11,9 +11,9 @@ build/
 dist/
 
 # Dependencies
+node_modules/
 venv/
 .venv/
-node_modules/
 __pycache__/
 .mypy_cache/
 .pytest_cache/
