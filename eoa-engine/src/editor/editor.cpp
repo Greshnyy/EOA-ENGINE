@@ -5,10 +5,12 @@
 #include "renderer/mesh_component.h"
 #include "renderer/light_component.h"
 #include "renderer/camera_component.h"
-#define GLFW_EXPOSE_NATIVE_WIN32
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+#ifdef _WIN32
+#define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
+#endif
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "imgui_impl_glfw.h"
