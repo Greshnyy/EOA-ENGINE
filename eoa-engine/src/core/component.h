@@ -8,7 +8,7 @@ class Actor;
 
 class Component : public Object {
 public:
-    const char* ClassName() const override { return "Component"; }
+    EOA_CLASS_DECL(Component, Object)
 
     explicit Component(const std::string& name = "Component");
     ~Component() override = default;

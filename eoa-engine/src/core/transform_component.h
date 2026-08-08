@@ -8,7 +8,7 @@ namespace eoa {
 
 class TransformComponent : public Component {
 public:
-    const char* ClassName() const override { return "TransformComponent"; }
+    EOA_CLASS_DECL(TransformComponent, Component)
 
     explicit TransformComponent(const std::string& name = "Transform");
 

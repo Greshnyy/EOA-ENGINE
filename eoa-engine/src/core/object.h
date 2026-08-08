@@ -24,3 +24,6 @@ private:
 
 
 } // namespace eoa
+
+// Reflection macros включаем после объявления класса Object
+#include "core/reflection_macros.h"

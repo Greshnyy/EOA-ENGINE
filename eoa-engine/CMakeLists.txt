@@ -43,6 +43,8 @@ add_executable(eoa_engine
       src/core/component.cpp
       src/core/actor.cpp
       src/core/transform_component.cpp
+      src/core/serializer.cpp
+      src/core/world.cpp
       src/renderer/mesh_component.cpp
       src/renderer/gbuffer.cpp
       src/renderer/deferred_lighting.cpp

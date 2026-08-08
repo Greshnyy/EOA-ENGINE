@@ -1,4 +1,6 @@
 #include "core/transform_component.h"
+#include "core/reflection_macros.h"
+#include <glm/gtc/type_ptr.hpp>
 
 namespace eoa {
 
@@ -29,5 +31,12 @@ glm::vec3 TransformComponent::Right() const {
 glm::vec3 TransformComponent::Up() const {
     return glm::normalize(rotation_ * glm::vec3(0.0f, 1.0f, 0.0f));
 }
+
+// Регистрация класса TransformComponent с его свойствами
+EOA_CLASS_IMPL(TransformComponent, Component)
+    EOA_PROPERTY(position_, PropertyType::Vec3)
+    EOA_PROPERTY(rotation_, PropertyType::Quat)
+    EOA_PROPERTY(scale_, PropertyType::Vec3)
+EOA_END_CLASS_IMPL()
 
 } // namespace eoa

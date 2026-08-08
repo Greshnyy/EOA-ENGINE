@@ -1,5 +1,6 @@
 #include "platform/window.h"
 #include "log.h"
+#include <stdexcept>
 
 namespace eoa {
 
@@ -16,6 +17,47 @@ Window::Window(int width, int height, const std::string& title)
     if (!handle_) {
         EOA_FATAL("glfwCreateWindow() failed");
     }
+
+    // Устанавливаем указатель на this для callback'ов
+    glfwSetWindowUserPointer(handle_, this);
+
+    // Регистрируем callback'и
+    glfwSetKeyCallback(handle_, [](GLFWwindow* window, int key, int scancode, int action, int mods) {
+        Window* self = static_cast<Window*>(glfwGetWindowUserPointer(window));
+        if (self && self->m_KeyCallback) {
+            self->m_KeyCallback(key, action, mods);
+        }
+    });
+
+    glfwSetCursorPosCallback(handle_, [](GLFWwindow* window, double xpos, double ypos) {
+        Window* self = static_cast<Window*>(glfwGetWindowUserPointer(window));
+        if (self && self->m_MouseMoveCallback) {
+            self->m_MouseMoveCallback(xpos, ypos);
+        }
+    });
+
+    glfwSetScrollCallback(handle_, [](GLFWwindow* window, double xoffset, double yoffset) {
+        Window* self = static_cast<Window*>(glfwGetWindowUserPointer(window));
+        if (self && self->m_MouseScrollCallback) {
+            self->m_MouseScrollCallback(xoffset, yoffset);
+        }
+    });
+
+    glfwSetMouseButtonCallback(handle_, [](GLFWwindow* window, int button, int action, int mods) {
+        Window* self = static_cast<Window*>(glfwGetWindowUserPointer(window));
+        if (self && self->m_MouseButtonCallback) {
+            self->m_MouseButtonCallback(button, action, mods);
+        }
+    });
+
+    // Callback на изменение размера
+    glfwSetFramebufferSizeCallback(handle_, [](GLFWwindow* window, int w, int h) {
+        Window* self = static_cast<Window*>(glfwGetWindowUserPointer(window));
+        if (self) {
+            self->width_ = w;
+            self->height_ = h;
+        }
+    });
 
     EOA_LOG("Window created: %dx%d \"%s\"", width_, height_, title.c_str());
 }

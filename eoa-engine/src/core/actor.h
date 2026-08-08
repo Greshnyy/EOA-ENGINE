@@ -9,7 +9,7 @@ namespace eoa {
 
 class Actor : public Object {
 public:
-    const char* ClassName() const override { return "Actor"; }
+    EOA_CLASS_DECL(Actor, Object)
 
     explicit Actor(const std::string& name = "Actor");
     virtual ~Actor() = default;
