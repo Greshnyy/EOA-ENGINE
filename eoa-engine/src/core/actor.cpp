@@ -27,4 +27,8 @@ void Actor::EndPlay() {
     }
 }
 
+// Регистрация класса Actor
+EOA_CLASS_IMPL(Actor, Object)
+EOA_END_CLASS_IMPL()
+
 } // namespace eoa

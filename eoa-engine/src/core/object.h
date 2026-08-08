@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <cstdint>
+#include "core/reflection_macros.h"
 
 namespace eoa {
 

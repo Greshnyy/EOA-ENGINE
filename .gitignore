@@ -1,0 +1,68 @@
+```
+# Compiled and build artifacts
+*.o
+*.obj
+*.a
+*.lib
+*.dll
+*.so
+*.dylib
+*.exe
+*.out
+
+# Build directories
+build/
+dist/
+target/
+
+# Dependencies
+node_modules/
+vendor/
+third-party/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.tmp
+
+# Logs
+*.log
+
+# Coverage reports
+coverage/
+htmlcov/
+.coverage
+
+# Environment variables
+.env
+.env.local
+*.env.*
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Python specific
+__pycache__/
+*.pyc
+*.pyo
+.Python
+*.egg-info/
+.eggs/
+
+# C/C++ specific
+*.i
+*.ii
+*.s
+*.su
+*.gcda
+*.gcno
+*.gcov
+*.stackdump
+
+# Reflection and type info (if generated)
+eoa-engine/src/core/reflection_macros.h
+eoa-engine/src/core/type_info.h
+```
