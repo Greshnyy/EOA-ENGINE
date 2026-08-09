@@ -1,21 +1,71 @@
-MIT License
+EOA ENGINE — PROPRIETARY SOFTWARE LICENSE
 
-Copyright (c) 2026 ybiliavskyi-lang
+Copyright (c) 2026 Greshnyy. All Rights Reserved.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+1. DEFINITIONS
+   "Software" means the EOA Engine source code, binaries, documentation, assets,
+   and all associated files contained in this repository.
+   "Licensor" means the copyright holder, Greshnyy.
+   "You" means any individual or entity that accesses, views, or otherwise interacts
+   with the Software.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+2. OWNERSHIP
+   The Software is the exclusive property of the Licensor. This repository is
+   temporarily made public for demonstration, review, or evaluation purposes only.
+   No ownership rights, title, or interest in the Software is transferred to You
+   under any circumstances.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+3. RESTRICTIONS
+   You are expressly prohibited from, and agree not to:
+   a) Use the Software for any purpose, commercial or non-commercial, without prior
+      written authorization from the Licensor;
+   b) Copy, reproduce, distribute, publish, display, or transmit the Software
+      in whole or in part;
+   c) Modify, adapt, translate, reverse engineer, decompile, disassemble, or create
+      derivative works based on the Software;
+   d) Sublicense, lease, loan, sell, or transfer any rights in the Software to
+      any third party;
+   e) Remove, alter, or obscure any copyright, trademark, or proprietary notices
+      contained in the Software.
+
+4. TEMPORARY PUBLIC ACCESS
+   The public availability of this repository does not constitute a grant of any
+   license to use, modify, or distribute the Software. Access is provided solely
+   for inspection and shall not be construed as permission to fork, clone for
+   development purposes, or incorporate any portion of the Software into other
+   projects.
+
+5. NO WARRANTY
+   THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE, OR NON-INFRINGEMENT. THE ENTIRE RISK AS
+   TO THE QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH YOU.
+
+6. LIMITATION OF LIABILITY
+   IN NO EVENT SHALL THE LICENSOR BE LIABLE FOR ANY DAMAGES, INCLUDING BUT NOT
+   LIMITED TO DIRECT, INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE
+   DAMAGES, ARISING OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE INABILITY
+   TO USE THE SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+7. TERMINATION
+   This license is effective until terminated. It will terminate automatically
+   without notice if You fail to comply with any of its terms. Upon termination,
+   You must immediately cease all access to and use of the Software and destroy
+   any copies in Your possession.
+
+8. GOVERNING LAW
+   This license shall be governed by and construed in accordance with the laws
+   of the jurisdiction in which the Licensor resides, without regard to its
+   conflict of law principles.
+
+9. ENTIRE AGREEMENT
+   This license constitutes the entire agreement between You and the Licensor
+   regarding the Software and supersedes all prior agreements, understandings,
+   and representations.
+
+By accessing, viewing, or otherwise interacting with this repository, You
+acknowledge that You have read, understood, and agree to be bound by the terms
+of this license.
+
+For licensing inquiries, commercial use, or any other permissions, please contact:
+Greshnyy
