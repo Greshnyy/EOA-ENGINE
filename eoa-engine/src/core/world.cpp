@@ -1,5 +1,5 @@
 #include "core/world.h"
-#include "third_party/json.hpp"
+#include <nlohmann/json.hpp>
 #include <algorithm>
 
 namespace eoa {

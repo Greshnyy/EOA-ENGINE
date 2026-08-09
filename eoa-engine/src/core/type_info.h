@@ -194,6 +194,13 @@ public:
         else if constexpr (std::is_same_v<T, float>) return type_ == PropertyType::Float;
         else if constexpr (std::is_same_v<T, double>) return type_ == PropertyType::Double;
         else if constexpr (std::is_same_v<T, std::string>) return type_ == PropertyType::String;
+        else if constexpr (std::is_same_v<T, glm::vec2>) return type_ == PropertyType::Vec2;
+        else if constexpr (std::is_same_v<T, glm::vec3>) return type_ == PropertyType::Vec3;
+        else if constexpr (std::is_same_v<T, glm::vec4>) return type_ == PropertyType::Vec4;
+        else if constexpr (std::is_same_v<T, glm::quat>) return type_ == PropertyType::Quat;
+        else if constexpr (std::is_same_v<T, glm::mat2>) return type_ == PropertyType::Mat2;
+        else if constexpr (std::is_same_v<T, glm::mat3>) return type_ == PropertyType::Mat3;
+        else if constexpr (std::is_same_v<T, glm::mat4>) return type_ == PropertyType::Mat4;
         return false;
     }
     
@@ -212,6 +219,44 @@ private:
     SetterFunc setter_;
     PropertyMetadata metadata_;
 };
+
+// ============================================================================
+// Специализации типов для glm (внутри namespace eoa)
+// ============================================================================
+template<>
+inline bool Property::IsType<glm::vec2>() const {
+    return type_ == PropertyType::Vec2;
+}
+
+template<>
+inline bool Property::IsType<glm::vec3>() const {
+    return type_ == PropertyType::Vec3;
+}
+
+template<>
+inline bool Property::IsType<glm::vec4>() const {
+    return type_ == PropertyType::Vec4;
+}
+
+template<>
+inline bool Property::IsType<glm::quat>() const {
+    return type_ == PropertyType::Quat;
+}
+
+template<>
+inline bool Property::IsType<glm::mat2>() const {
+    return type_ == PropertyType::Mat2;
+}
+
+template<>
+inline bool Property::IsType<glm::mat3>() const {
+    return type_ == PropertyType::Mat3;
+}
+
+template<>
+inline bool Property::IsType<glm::mat4>() const {
+    return type_ == PropertyType::Mat4;
+}
 
 // ============================================================================
 // Класс Function для отражения методов

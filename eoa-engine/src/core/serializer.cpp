@@ -4,7 +4,7 @@
 #include <filesystem>
 
 // Используем json из nlohmann через include path в CMake
-#include <nlohmann/json.hpp>
+#include "third_party/json.hpp"
 
 namespace eoa {
 
