@@ -1,8 +1,10 @@
 #include "core/serializer.h"
-#include "third_party/json.hpp"
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <filesystem>
+
+// Используем json из nlohmann через include path в CMake
+#include <nlohmann/json.hpp>
 
 namespace eoa {
 

@@ -1,0 +1,12 @@
+# Hashes of file build rules.
+fe8a4d06a4415c46bd31b08168f4a182 CMakeFiles/shaders
+40a00fdb6598b1be05445aba1eab4b6d shaders/deferred_lighting.frag.spv
+b1877165f251c78b618aa77e50192865 shaders/deferred_lighting.vert.spv
+152bc8e92e91e9e2674be93c2fad8cf9 shaders/gbuffer.frag.spv
+1fb52b37bb8ce4f285a8d993903db147 shaders/gbuffer.vert.spv
+0203e46dd45de3447cda3f048e01cec4 shaders/particle.frag.spv
+45d2d2f06b67da5f9b4aef2b953dcef5 shaders/particle.vert.spv
+1e05d8d5dc84a3c6158db9734fb2eed0 shaders/shadow_depth.frag.spv
+526b23e54118fc079a86a04ae4dc07b6 shaders/shadow_depth.vert.spv
+ea9b445f8f5149bece5f11a5bc04883c shaders/triangle.frag.spv
+333629f646ce64a37511b7ac5c452069 shaders/triangle.vert.spv

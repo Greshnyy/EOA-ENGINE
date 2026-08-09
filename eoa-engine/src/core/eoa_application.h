@@ -10,6 +10,7 @@
 // Forward declare
 namespace eoa { class Window; }
 class Renderer;
+namespace eoa { class World; }
 
 namespace EOA
 {
@@ -61,7 +62,7 @@ namespace EOA
 
         // --- Доступ к подсистемам ---
         InputSystem* GetInputSystem() const { return m_InputSystem.get(); }
-        World* GetCurrentWorld() const { return m_CurrentWorld.get(); }
+        eoa::World* GetCurrentWorld() const { return m_CurrentWorld.get(); }
         GameInstance* GetGameInstance() const { return m_GameInstance.get(); }
 
         // --- Управление миром ---
@@ -92,7 +93,7 @@ namespace EOA
         std::unique_ptr<GameInstance> m_GameInstance;
         
         // Текущий активный мир
-        std::unique_ptr<World> m_CurrentWorld;
+        std::unique_ptr<eoa::World> m_CurrentWorld;
 
         // Состояние цикла
         bool m_Running = false;

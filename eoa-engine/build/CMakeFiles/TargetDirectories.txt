@@ -1,0 +1,4 @@
+/workspace/eoa-engine/build/CMakeFiles/eoa_engine.dir
+/workspace/eoa-engine/build/CMakeFiles/shaders.dir
+/workspace/eoa-engine/build/CMakeFiles/edit_cache.dir
+/workspace/eoa-engine/build/CMakeFiles/rebuild_cache.dir
