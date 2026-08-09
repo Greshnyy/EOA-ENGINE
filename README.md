@@ -57,11 +57,11 @@ echo %VULKAN_SDK%
 ```cmd
 cd C:git clone https://github.com/microsoft/vcpkg.git
 cd vcpkg
-.ootstrap-vcpkg.bat
-.cpkg integrate install
+.bootstrap-vcpkg.bat
+.vcpkg integrate install
 
 :: Установка зависимостей
-.cpkg install glfw3:x64-windows glm:x64-windows
+.vcpkg install glfw3:x64-windows glm:x64-windows
 ```
 
 ### 3. Клонирование и сборка
