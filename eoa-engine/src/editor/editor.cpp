@@ -23,7 +23,7 @@
 #include <set>
 #include <fstream>
 #include <ctime>
-#include "ImGuizmo.h"
+#include "third_party/imguizmo/ImGuizmo.h"
 #include "stb_image.h"
 
 namespace eoa {

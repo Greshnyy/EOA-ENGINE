@@ -28,9 +28,11 @@ struct Time {
     void SetTimeScale(Seconds scale) { timeScale_ = std::max(0.0, scale); }
     
     Seconds GetRealDeltaTime() const { return realDeltaTime_; }
+    void SetRealDeltaTime(Seconds dt) { realDeltaTime_ = dt; }
     
 private:
     Seconds timeScale_ = 1.0;
+public:
     Seconds realDeltaTime_ = 0.0;
 };
 
@@ -50,7 +52,7 @@ public:
         std::chrono::duration<Seconds> elapsed = now - lastFrameTime_;
         lastFrameTime_ = now;
         
-        time_.realDeltaTime_ = elapsed.count();
+        time_.SetRealDeltaTime(elapsed.count());
         time_.deltaTime = elapsed.count() * time_.GetTimeScale();
         time_.totalTime += time_.deltaTime;
         time_.frameCount++;
@@ -66,7 +68,7 @@ public:
         time_.fps = static_cast<float>(frameTimes_.size() / avgTime);
         
         // Накопление времени для фиксированного шага
-        fixedTimeAccumulator_ += time_.realDeltaTime_;
+        fixedTimeAccumulator_ += time_.GetRealDeltaTime();
     }
     
     bool ShouldFixedUpdate() const {
@@ -93,6 +95,7 @@ public:
 
 private:
     using Clock = std::chrono::high_resolution_clock;
+    using TimePoint = Clock::time_point;
     TimePoint lastFrameTime_;
     Seconds fixedTimeAccumulator_;
     Time time_;

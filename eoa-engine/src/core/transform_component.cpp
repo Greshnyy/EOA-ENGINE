@@ -1,5 +1,5 @@
 #include "core/transform_component.h"
-#include "reflection/eoa_reflection.h" // Добавьте этот инклуд
+#include "core/type_info.h"
 
 namespace eoa {
 
@@ -16,20 +16,23 @@ void TransformComponent::RegisterReflection() {
     static bool registered = false;
     if (registered) return;
 
-    auto info = std::make_unique<ClassInfo>("TransformComponent", []() -> Object* { return new TransformComponent(); });
+    auto cls = std::make_unique<Class>("TransformComponent", "Component");
+    cls->SetSize(sizeof(TransformComponent));
+    cls->SetConstructor([]() -> std::unique_ptr<Object> {
+        return std::make_unique<TransformComponent>();
+    });
     
-    // Используем правильный синтаксис MakeProperty
-    info->AddProperty(MakeProperty<TransformComponent>(
+    cls->AddProperty(MakeProperty<TransformComponent>(
         "Position", PropertyType::Vec3, &TransformComponent::position_
     ));
-    info->AddProperty(MakeProperty<TransformComponent>(
+    cls->AddProperty(MakeProperty<TransformComponent>(
         "Rotation", PropertyType::Quat, &TransformComponent::rotation_
     ));
-    info->AddProperty(MakeProperty<TransformComponent>(
+    cls->AddProperty(MakeProperty<TransformComponent>(
         "Scale", PropertyType::Vec3, &TransformComponent::scale_
     ));
 
-    ReflectionManager::Get().RegisterClass(std::move(info));
+    ReflectionSystem::Get().RegisterClass(std::move(cls));
     registered = true;
 }
 
