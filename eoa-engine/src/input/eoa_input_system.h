@@ -1,9 +1,11 @@
 #pragma once
 
 #include "core/eoa_core.h"
-#include "platform/window.h"
 #include <unordered_map>
 #include <functional>
+
+// Forward declaration
+namespace eoa { class Window; }
 
 namespace EOA
 {
@@ -96,7 +98,7 @@ namespace EOA
          * @brief Инициализация системы ввода
          * @param window Окно для получения событий
          */
-        void Initialize(Window& window);
+        void Initialize(eoa::Window& window);
 
         /**
          * @brief Обновление состояния ввода (вызывать каждый кадр)
@@ -167,7 +169,7 @@ namespace EOA
         glm::vec2 m_MouseScroll = {0.0f, 0.0f};
         glm::vec2 m_LastMousePos = {0.0f, 0.0f};
         
-        Window* m_Window = nullptr;
+        eoa::Window* m_Window = nullptr;
     };
 
 } // namespace EOA
