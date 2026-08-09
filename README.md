@@ -270,7 +270,7 @@ namespace EOA {
 
 ## 📄 Лицензия
 
-EOA Engine распространяется под лицензией **MIT**. См. файл [LICENSE](LICENSE).
+EOA Engine распространяется под лицензией **PROPRIETARY SOFTWARE LICENSE**. См. файл [LICENSE](LICENSE).
 
 ---
 
