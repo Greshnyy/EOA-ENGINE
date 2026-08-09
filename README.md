@@ -72,7 +72,7 @@ cd EOA-ENGINE
 mkdir build && cd build
 
 :: Из Developer Command Prompt for VS 2022/2026:
-cmake -A x64 -DCMAKE_TOOLCHAIN_FILE=C:cpkg\scriptsuildsystemscpkg.cmake ..
+cmake -A x64 -DCMAKE_TOOLCHAIN_FILE=C:vcpkg\scriptsbuildsystemscpkg.cmake ..
 cmake --build . --config Debug
 ```
 
