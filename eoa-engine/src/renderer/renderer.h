@@ -33,22 +33,16 @@ public:
 
     void DrawFrame(uint32_t currentWidth, uint32_t currentHeight, const glm::mat4& viewMatrix);
     World& GetWorld() { return world_; }
+    const World& GetWorld() const { return world_; }
     VkRenderPass GetRenderPass() const { return renderPass_; }
     VkRenderPass GetGBufferRenderPass() const { return gbuffer_->GetRenderPass(); }
+    uint32_t GetSwapchainImageCount() const { return swapchain_ ? swapchain_->ImageCount() : 0; }
     void SetEditor(Editor* editor) { editor_ = editor; }
 
-    // Грузит .gltf/.glb с диска и добавляет как новый объект в сцену. Публичный —
-    // вызывается и из CreateTestScene() при старте, и из Editor (Asset Browser)
-    // по двойному клику на файл. Материал берётся из glTF, если там есть текстура;
-    // иначе — общий defaultMaterial_.
     void LoadGltfIntoWorld(const std::string& path);
 
 private:
     static constexpr int kFramesInFlight = 3;
-    // Сколько материалов (с уникальными текстурами) движок готов держать
-    // одновременно. Статический лимит на размер descriptor pool — упрощение
-    // на сейчас; вырастет в проблему только если Asset Browser зафлудить
-    // загрузкой 60+ разных текстурированных моделей подряд без выгрузки сцены.
     static constexpr uint32_t kMaxMaterials = 64;
 
     VkPhysicalDevice physical_;
@@ -66,32 +60,26 @@ private:
     VkImageView depthImageView_ = VK_NULL_HANDLE;
     VkFormat depthFormat_;
 
-    // Два набора: set=0 — камера/свет (общий на кадр, kFramesInFlight штук),
-    // set=1 — текстура материала (свой на Material, не на кадр). См. комментарий
-    // в pipeline.h почему они разделены.
     VkDescriptorSetLayout cameraSetLayout_ = VK_NULL_HANDLE;
     VkDescriptorSetLayout materialSetLayout_ = VK_NULL_HANDLE;
     std::unique_ptr<Pipeline> pipeline_;
 
     VkCommandPool commandPool_ = VK_NULL_HANDLE;
     std::vector<VkCommandBuffer> commandBuffers_;
-
     std::vector<VkBuffer> uniformBuffers_;
     std::vector<VkDeviceMemory> uniformBuffersMemory_;
     std::vector<void*> uniformBuffersMapped_;
     VkDescriptorPool descriptorPool_ = VK_NULL_HANDLE;
-    std::vector<VkDescriptorSet> cameraDescriptorSets_; // по одному на frame-in-flight
+    std::vector<VkDescriptorSet> cameraDescriptorSets_;
 
     World world_;
     std::shared_ptr<MaterialData> defaultMaterial_;
     Editor* editor_ = nullptr;
 
-    // Deferred rendering
     std::unique_ptr<GBuffer> gbuffer_;
     std::unique_ptr<DeferredLighting> deferredLighting_;
     std::unique_ptr<Pipeline> gbufferPipeline_;
 
-    // Light uniform buffers
     VkBuffer lightArrayBuffer_ = VK_NULL_HANDLE;
     VkDeviceMemory lightArrayBufferMemory_ = VK_NULL_HANDLE;
     VkBuffer lightInfoBuffer_ = VK_NULL_HANDLE;
@@ -102,14 +90,12 @@ private:
     std::vector<VkFence> inFlightFences_;
     size_t currentFrame_ = 0;
 
-    // Deferred rendering setup
     void CreateGBufferPipeline();
     void CreateDeferredLighting();
     void CreateLightBuffers();
     void UpdateLightBuffers();
     void RecordGBufferPass(VkCommandBuffer cmd);
     void RecordDeferredPass(VkCommandBuffer cmd, uint32_t imageIndex);
-
     void CreateRenderPass();
     void CreateDepthResources(uint32_t width, uint32_t height);
     void CreateDescriptorSetLayouts();
@@ -129,9 +115,6 @@ private:
     void RecreateSwapchain(uint32_t width, uint32_t height);
     void CleanupSwapchainDependents();
     VkFormat FindDepthFormat() const;
-
-    // Создаёt Material с собственным Texture + descriptor set (set=1) под неё.
-    // Аллоцирует из общего descriptorPool_ — вызывать только пока не исчерпан kMaxMaterials.
     std::shared_ptr<MaterialData> CreateMaterialWithTexture(const std::string& name,
                                                            const std::string& texturePath);
 };
