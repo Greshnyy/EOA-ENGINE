@@ -1,6 +1,9 @@
 #version 460
 
-// Depth-only — no fragment shader outputs needed
+layout(location = 0) out vec4 outColor;
+
 void main() {
-    // gl_FragDepth is written automatically
+    // Depth-only pass — output is handled by depth attachment
+    // Fragment shader required by Vulkan but doesn't need to write color
+    outColor = vec4(1.0);
 }
