@@ -35,10 +35,6 @@ public:
             return;
         }
 
-        if (actor == nullptr) {
-            return;
-        }
-
         actor->EndPlay();
         actors.erase(
             std::remove_if(actors.begin(), actors.end(),
