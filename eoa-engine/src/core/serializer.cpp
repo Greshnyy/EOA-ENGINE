@@ -3,6 +3,7 @@
 #include <glm/gtc/quaternion.hpp>
 #include <filesystem>
 #include <nlohmann/json.hpp>
+#include "log.h"
 
 namespace eoa {
 
@@ -205,12 +206,14 @@ Object* JsonSerializer::Deserialize(const std::string& data, const std::string& 
         json root = json::parse(data);
         if (root.contains("__type__")) {
             const std::string type = root["__type__"];
-            if (type != className) LOG_WARN("Type mismatch: expected {}, got {}", className, type);
+            if (type != className) {
+                EOA_WARN("Type mismatch: expected '%s', got '%s'", className.c_str(), type.c_str());
+            }
         }
 
         auto obj = ReflectionSystem::Get().CreateObject(className);
         if (!obj) {
-            LOG_ERROR("Failed to create object of type {}", className);
+            EOA_ERROR("Failed to create object of type '%s'", className.c_str());
             return nullptr;
         }
 
@@ -225,7 +228,7 @@ Object* JsonSerializer::Deserialize(const std::string& data, const std::string& 
         }
         return obj.release();
     } catch (const std::exception& e) {
-        LOG_ERROR("Deserialization error: {}", e.what());
+        EOA_ERROR("Deserialization error: %s", e.what());
         return nullptr;
     }
 }
