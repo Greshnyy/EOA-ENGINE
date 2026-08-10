@@ -40,6 +40,10 @@ class TimeSystem {
 public:
     TimeSystem() : lastFrameTime_(Clock::now()) {}
 
+    void SetFixedDeltaTime(Seconds dt) {
+        time_.fixedDeltaTime = std::max(0.0001, dt);
+    }
+
     void Tick() {
         const auto now = Clock::now();
         const std::chrono::duration<Seconds> elapsed = now - lastFrameTime_;
@@ -55,6 +59,17 @@ public:
         ++time_.frameCount;
 
         frameTimes_.push_back(realDelta);
+        if (frameTimes_.size() > 60) frameTimes_.erase(frameTimes_.begin());
+
+        Seconds avgTime = 0.0;
+        for (const Seconds t : frameTimes_) avgTime += t;
+        if (avgTime > 0.0) time_.fps = static_cast<float>(frameTimes_.size() / avgTime);
+
+        fixedTimeAccumulator_ += time_.deltaTime;
+    }
+
+    bool ShouldFixedUpdate() const { return fixedTimeAccumulator_ >= time_.fixedDeltaTime; }
+
         if (frameTimes_.size() > 60) {
             frameTimes_.erase(frameTimes_.begin());
         }
@@ -79,6 +94,14 @@ public:
     }
 
     void DoFixedUpdate() { ConsumeFixedStep(); }
+    const Time& GetTime() const { return time_; }
+
+    static Seconds Now() {
+        return std::chrono::duration<Seconds>(Clock::now().time_since_epoch()).count();
+    }
+
+    static void Sleep(Milliseconds ms) {
+        if (ms > 0.0) std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(ms));
 
     const Time& GetTime() const { return time_; }
 
@@ -108,6 +131,7 @@ using LogCallback = std::function<void(LogLevel, const std::string&)>;
 
 class Logger {
 public:
+    static Logger& GetInstance() { static Logger instance; return instance; }
     static Logger& GetInstance() {
         static Logger instance;
         return instance;
@@ -161,6 +185,7 @@ using Task = std::function<void()>;
 
 class TaskManager {
 public:
+    static TaskManager& GetInstance() { static TaskManager instance; return instance; }
     static TaskManager& GetInstance() {
         static TaskManager instance;
         return instance;
@@ -190,6 +215,9 @@ public:
                 if (it->delay <= 0.0) {
                     readyDelayedTasks.push_back(std::move(it->task));
                     it = delayedTasks_.erase(it);
+                } else ++it;
+            }
+        }
                 } else {
                     ++it;
                 }
@@ -228,7 +256,6 @@ public:
     void SetPriority(int priority) { priority_ = priority; }
     bool IsEnabled() const { return enabled_; }
     void SetEnabled(bool enabled) { enabled_ = enabled; }
-
 protected:
     int priority_ = 0;
     bool enabled_ = true;
