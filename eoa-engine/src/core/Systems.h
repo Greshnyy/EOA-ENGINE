@@ -24,23 +24,22 @@ struct Time {
     Seconds fixedDeltaTime = 0.02;
     float fps = 0.0f;
     uint64_t frameCount = 0;
-
     Seconds GetTimeScale() const { return timeScale_; }
     void SetTimeScale(Seconds scale) { timeScale_ = std::max(0.0, scale); }
     Seconds GetRealDeltaTime() const { return realDeltaTime_; }
     void SetRealDeltaTime(Seconds dt) { realDeltaTime_ = std::max(0.0, dt); }
-
 private:
     Seconds timeScale_ = 1.0;
     Seconds realDeltaTime_ = 0.0;
 };
 
 class TimeSystem {
+private:
+    using Clock = std::chrono::steady_clock;
+    using TimePoint = Clock::time_point;
 public:
     TimeSystem() : lastFrameTime_(Clock::now()) {}
-
     void SetFixedDeltaTime(Seconds dt) { time_.fixedDeltaTime = std::max(0.0001, dt); }
-
     void Tick() {
         const auto now = Clock::now();
         const Seconds realDelta = std::max(0.0, std::chrono::duration<Seconds>(now - lastFrameTime_).count());
@@ -50,7 +49,6 @@ public:
         time_.deltaTime = std::min(realDelta, kMaxDeltaTime) * time_.GetTimeScale();
         time_.totalTime += time_.deltaTime;
         ++time_.frameCount;
-
         frameTimes_.push_back(realDelta);
         if (frameTimes_.size() > 60) frameTimes_.erase(frameTimes_.begin());
         Seconds total = 0.0;
@@ -58,7 +56,6 @@ public:
         if (total > 0.0) time_.fps = static_cast<float>(frameTimes_.size() / total);
         fixedTimeAccumulator_ += time_.deltaTime;
     }
-
     bool ShouldFixedUpdate() const { return fixedTimeAccumulator_ >= time_.fixedDeltaTime; }
     bool ConsumeFixedStep() {
         if (!ShouldFixedUpdate()) return false;
@@ -67,19 +64,13 @@ public:
     }
     void DoFixedUpdate() { ConsumeFixedStep(); }
     const Time& GetTime() const { return time_; }
-
     static Seconds Now() { return std::chrono::duration<Seconds>(Clock::now().time_since_epoch()).count(); }
-    static void Sleep(Milliseconds ms) {
-        if (ms > 0.0) std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(ms));
-    }
-
+    static void Sleep(Milliseconds ms) { if (ms > 0.0) std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(ms)); }
 private:
-    using Clock = std::chrono::steady_clock;
-    TimePointAlias lastFrameTime_;
+    TimePoint lastFrameTime_;
     Seconds fixedTimeAccumulator_ = 0.0;
     Time time_;
     std::vector<Seconds> frameTimes_;
-    using TimePointAlias = Clock::time_point;
 };
 
 enum class LogLevel { Trace = 0, Debug = 1, Info = 2, Warn = 3, Error = 4, Fatal = 5 };
@@ -90,7 +81,6 @@ public:
     static Logger& GetInstance() { static Logger instance; return instance; }
     void SetLevel(LogLevel level) { minLevel_ = level; }
     void SetCallback(LogCallback callback) { callback_ = std::move(callback); }
-
     void Log(LogLevel level, const std::string& message) {
         if (level < minLevel_) return;
         const char* prefix = "[INFO]";
@@ -128,13 +118,11 @@ private:
 #define EOA_LOG_FATAL(msg) eoa::Logger::GetInstance().Fatal(msg)
 
 using Task = std::function<void()>;
-
 class TaskManager {
 public:
     static TaskManager& GetInstance() { static TaskManager instance; return instance; }
     void AddTask(Task task) { if (!task) return; std::lock_guard<std::mutex> lock(mutex_); tasks_.push_back(std::move(task)); }
     void AddTaskDelayed(Task task, Seconds delay) { if (!task) return; std::lock_guard<std::mutex> lock(mutex_); delayedTasks_.push_back({std::move(task), std::max(0.0, delay)}); }
-
     void ProcessTasks(Seconds deltaTime) {
         std::vector<Task> immediate, ready;
         {
