@@ -1,4 +1,3 @@
-```
 # Build artifacts
 *.o
 *.obj
@@ -7,6 +6,10 @@
 *.so
 *.a
 *.out
+
+# CMake build directories
+build/
+cmake-build-*/
 
 # Dependencies
 third_party/
@@ -24,4 +27,3 @@ third_party/
 # System files
 .DS_Store
 Thumbs.db
-```

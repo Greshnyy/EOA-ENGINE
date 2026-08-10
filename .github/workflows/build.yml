@@ -21,6 +21,7 @@ jobs:
             libglfw3-dev libglm-dev glslc
 
       - name: Remove generated build tree
+      - name: Clean CMake cache
         run: rm -rf eoa-engine/build
 
       - name: Configure
