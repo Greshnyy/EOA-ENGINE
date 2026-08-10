@@ -1,0 +1,29 @@
+name: Build
+
+on:
+  push:
+    branches: [ main, "**" ]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake ninja-build g++ \
+            libvulkan-dev vulkan-tools \
+            libglfw3-dev libglm-dev glslc
+
+      - name: Configure
+        working-directory: eoa-engine
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        working-directory: eoa-engine
+        run: cmake --build build --parallel
