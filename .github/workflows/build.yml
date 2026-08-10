@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -19,6 +19,9 @@ jobs:
             cmake ninja-build g++ \
             libvulkan-dev vulkan-tools \
             libglfw3-dev libglm-dev glslc
+
+      - name: Remove generated build tree
+        run: rm -rf eoa-engine/build
 
       - name: Configure
         working-directory: eoa-engine
