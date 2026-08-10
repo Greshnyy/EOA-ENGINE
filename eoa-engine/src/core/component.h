@@ -14,7 +14,7 @@ public:
     ~Component() override = default;
 
     virtual void BeginPlay() {}
-    virtual void Tick(float deltaTime) {}
+    virtual void Tick(float) {}
     virtual void EndPlay() {}
 
     Actor* GetOwner() const { return owner_; }
