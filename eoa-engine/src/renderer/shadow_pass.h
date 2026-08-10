@@ -4,10 +4,9 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "renderer/pipeline.h"
 
 namespace eoa {
-
-class Pipeline;
 
 // Shadow mapping pass: renders depth from light's view for directional light
 class ShadowPass {
@@ -25,13 +24,12 @@ public:
 
     VkRenderPass GetRenderPass() const { return renderPass_; }
     VkFramebuffer GetFramebuffer() const { return framebuffer_; }
-    VkPipeline GetPipeline() const { return pipeline_->Handle(); }
-    VkPipelineLayout GetLayout() const { return pipeline_->Layout(); }
+    VkPipeline GetPipeline() const { return pipeline_ ? pipeline_->Handle() : VK_NULL_HANDLE; }
+    VkPipelineLayout GetLayout() const { return pipeline_ ? pipeline_->Layout() : VK_NULL_HANDLE; }
     VkImageView GetDepthImageView() const { return depthImageView_; }
     VkSampler GetDepthSampler() const { return depthSampler_; }
     VkExtent2D GetExtent() const { return extent_; }
 
-    // Light view-projection matrix
     glm::mat4 GetLightViewProj() const { return lightViewProj_; }
     void SetLightViewProj(const glm::mat4& vp) { lightViewProj_ = vp; }
 
