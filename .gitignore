@@ -1,29 +1,76 @@
+```
 # Build artifacts
+build/
+dist/
 *.o
 *.obj
-*.exe
-*.dll
-*.so
 *.a
+*.so
+*.dll
+*.exe
 *.out
-
-# CMake build directories
-build/
-cmake-build-*/
 
 # Dependencies
 third_party/
 
-# Logs and temp files
-*.log
-*.tmp
+# CMake
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
 
-# Editor/IDE files
+# Editor/IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+*.tmp
 
-# System files
+# Logs
+*.log
+
+# Coverage
+coverage/
+htmlcov/
+.coverage
+
+# Environment
+.env
+.env.local
+*.env.*
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Node
+node_modules/
+
+# Virtual environments
+venv/
+.venv/
+.env
+
+# MyPy
+.mypy_cache/
+
+# Pytest
+.pytest_cache/
+
+# Gradle
+.gradle/
+build/
+
+# Target
+target/
+
+# Temporary files
+*.tmp
+*~
 .DS_Store
 Thumbs.db
+```
