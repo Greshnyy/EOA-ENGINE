@@ -5,11 +5,7 @@
 #include <fstream>
 #include <sstream>
 #include <iomanip>
-
-// Forward declare json library
-namespace nlohmann {
-    class json;
-}
+#include <nlohmann/json_fwd.hpp>
 
 namespace eoa {
 
@@ -19,13 +15,13 @@ namespace eoa {
 class Serializer {
 public:
     virtual ~Serializer() = default;
-    
+
     // Сериализовать объект в строку
     virtual std::string Serialize(Object* obj) = 0;
-    
+
     // Десериализовать объект из строки
     virtual Object* Deserialize(const std::string& data, const std::string& className) = 0;
-    
+
     // Сохранить в файл
     bool SaveToFile(Object* obj, const std::string& filename) {
         std::ofstream file(filename);
@@ -36,7 +32,7 @@ public:
         file.close();
         return true;
     }
-    
+
     // Загрузить из файла
     Object* LoadFromFile(const std::string& filename, const std::string& className) {
         std::ifstream file(filename);
@@ -57,15 +53,15 @@ class JsonSerializer : public Serializer {
 public:
     JsonSerializer() = default;
     ~JsonSerializer() override = default;
-    
+
     std::string Serialize(Object* obj) override;
     Object* Deserialize(const std::string& data, const std::string& className) override;
-    
+
 private:
     // Вспомогательные функции для конвертации типов в JSON
     void ToJson(nlohmann::json& j, PropertyType type, const std::any& value);
     std::any FromJson(const nlohmann::json& j, PropertyType type, const std::string& typeName);
-    
+
     // Сериализация отдельного свойства
     void SerializeProperty(nlohmann::json& j, Property* prop, void* instance);
     void DeserializeProperty(Property* prop, void* instance, const nlohmann::json& j);
@@ -78,19 +74,19 @@ class SerializationUtils {
 public:
     // Получить относительный путь
     static std::string GetRelativePath(const std::string& fullPath, const std::string& basePath);
-    
+
     // Нормализовать путь (конвертировать backslashes в forward slashes)
     static std::string NormalizePath(const std::string& path);
-    
+
     // Проверить существование файла
     static bool FileExists(const std::string& filename);
-    
+
     // Создать директорию если не существует
     static bool CreateDirectoryIfNotExists(const std::string& path);
-    
+
     // Получить расширение файла
     static std::string GetFileExtension(const std::string& filename);
-    
+
     // Получить имя файла без расширения
     static std::string GetFileNameWithoutExtension(const std::string& filename);
 };
