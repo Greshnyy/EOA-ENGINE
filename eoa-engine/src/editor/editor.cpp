@@ -40,7 +40,23 @@ void Editor::SetupDocking() { ImGuiID dock=ImGui::DockSpaceOverViewport(0,ImGui:
 void Editor::NewFrame() { ImGui_ImplVulkan_NewFrame(); ImGui_ImplGlfw_NewFrame(); ImGui::NewFrame(); SetupDocking(); static auto previous=std::chrono::steady_clock::now(); const auto now=std::chrono::steady_clock::now(); const float dt=std::chrono::duration<float>(now-previous).count(); previous=now; if(!particleSystem_.GetEmitters().empty()) particleSystem_.Update(std::max(0.0f,dt),vpCameraPos_); DrawMainMenuBar(); DrawToolbar(); DrawProjectPanel(); DrawViewportPanel(); DrawHierarchyPanel(); DrawInspectorPanel(); DrawContentBrowser(); DrawConsolePanel(); DrawStatsOverlay(); DrawParticlePanel(); DrawMaterialEditorPanel(); DrawTextureViewer(); }
 void Editor::Render(VkCommandBuffer cmd){ ImGui::Render(); ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(),cmd); }
 bool Editor::WantsCaptureMouse()const{return ImGui::GetIO().WantCaptureMouse;} bool Editor::WantsCaptureKeyboard()const{return ImGui::GetIO().WantCaptureKeyboard;}
-void Editor::Log(const std::string& msg){ int level=0; if(msg.find("[ERROR]")!=std::string::npos||msg.find("[FATAL]")!=std::string::npos) level=2; else if(msg.find("[WARN]")!=std::string::npos) level=1; const std::time_t t=std::time(nullptr); std::tm local{}; #if defined(_WIN32) localtime_s(&local,&t); #else localtime_r(&t,&local); #endif char stamp[16]{}; std::strftime(stamp,sizeof(stamp),"%H:%M:%S",&local); consoleLog_.push_back({std::string(stamp)+" "+msg,level}); if(consoleLog_.size()>kMaxConsoleLines) consoleLog_.erase(consoleLog_.begin()); }
+void Editor::Log(const std::string& msg) {
+    int level = 0;
+    if (msg.find("[ERROR]") != std::string::npos || msg.find("[FATAL]") != std::string::npos) level = 2;
+    else if (msg.find("[WARN]") != std::string::npos) level = 1;
+
+    const std::time_t t = std::time(nullptr);
+    std::tm local{};
+#if defined(_WIN32)
+    localtime_s(&local, &t);
+#else
+    localtime_r(&t, &local);
+#endif
+    char stamp[16]{};
+    std::strftime(stamp, sizeof(stamp), "%H:%M:%S", &local);
+    consoleLog_.push_back({std::string(stamp) + " " + msg, level});
+    if (consoleLog_.size() > kMaxConsoleLines) consoleLog_.erase(consoleLog_.begin());
+}
 void Editor::DrawMainMenuBar(){ if(!ImGui::BeginMainMenuBar()) return; if(ImGui::BeginMenu("File")){ if(ImGui::MenuItem("New Scene")){(externalWorld_?externalWorld_:&editorWorld_)->Clear(); selectedObjectIndex_=-1; Log("New scene");} if(ImGui::MenuItem("Save Scene")) SaveScene("assets/scenes/default.scene"); if(ImGui::MenuItem("Load Scene")) LoadScene("assets/scenes/default.scene"); ImGui::Separator(); if(ImGui::MenuItem("Exit")) glfwSetWindowShouldClose(window_,GLFW_TRUE); ImGui::EndMenu(); } if(ImGui::BeginMenu("Edit")){ if(ImGui::MenuItem("Delete","Del")) DeleteSelectedActor(); if(ImGui::MenuItem("Duplicate","Ctrl+D")) DuplicateSelectedActor(); ImGui::EndMenu(); } if(ImGui::BeginMenu("View")){ ImGui::MenuItem("Viewport",nullptr,true); ImGui::MenuItem("Hierarchy",nullptr,true); ImGui::MenuItem("Inspector",nullptr,true); ImGui::MenuItem("Content Browser",nullptr,true); ImGui::MenuItem("Console",nullptr,true); ImGui::EndMenu(); } ImGui::EndMainMenuBar(); }
 void Editor::DrawToolbar(){ ImGui::Begin("##Toolbar",nullptr,ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoScrollbar|ImGuiWindowFlags_NoCollapse|ImGuiWindowFlags_NoDocking); ImGui::PushStyleColor(ImGuiCol_Button,playing_?ImVec4(0.65f,0.18f,0.12f,1):ImVec4(0.16f,0.55f,0.22f,1)); if(ImGui::Button(playing_?"Stop":"Play")){playing_=!playing_; paused_=false; Log(playing_?"Play":"Stop");} ImGui::PopStyleColor(); ImGui::SameLine(); if(ImGui::Button("Save")) SaveScene("assets/scenes/default.scene"); ImGui::SameLine(); if(ImGui::Button("Refresh")){RefreshAssetEntries();RefreshProjectTree();} ImGui::SameLine(); World* world=externalWorld_?externalWorld_:&editorWorld_; ImGui::Text("%.0f FPS | %zu actors",ImGui::GetIO().Framerate,world->actors.size()); ImGui::End(); }
 void Editor::HandleViewportInput(const ImVec2&,const ImVec2&){ ImGuiIO& io=ImGui::GetIO(); if(ImGui::IsWindowHovered()&&ImGui::IsMouseDown(ImGuiMouseButton_Right)){vpCameraActive_=true;vpCameraYaw_+=io.MouseDelta.x*0.3f;vpCameraPitch_=glm::clamp(vpCameraPitch_-io.MouseDelta.y*0.3f,-89.0f,89.0f);} if(ImGui::IsMouseReleased(ImGuiMouseButton_Right)) vpCameraActive_=false; if(ImGui::IsWindowHovered()&&io.MouseWheel!=0.0f){float yaw=glm::radians(vpCameraYaw_),pitch=glm::radians(vpCameraPitch_);glm::vec3 f(std::cos(yaw)*std::cos(pitch),std::sin(pitch),std::sin(yaw)*std::cos(pitch));vpCameraPos_+=f*io.MouseWheel*0.5f;} }
