@@ -1,6 +1,8 @@
 #pragma once
 #include <string>
 #include <cstdint>
+#include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 namespace eoa {
 
@@ -22,8 +24,7 @@ private:
     static uint64_t s_NextInstanceID;
 };
 
-
 } // namespace eoa
 
-// Reflection macros включаем после объявления класса Object
+// Reflection macros включаем после объявления класса Object.
 #include "core/reflection_macros.h"
