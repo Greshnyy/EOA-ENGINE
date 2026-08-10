@@ -27,7 +27,6 @@ struct Time {
 
     Seconds GetTimeScale() const { return timeScale_; }
     void SetTimeScale(Seconds scale) { timeScale_ = std::max(0.0, scale); }
-
     Seconds GetRealDeltaTime() const { return realDeltaTime_; }
     void SetRealDeltaTime(Seconds dt) { realDeltaTime_ = std::max(0.0, dt); }
 
@@ -40,90 +39,47 @@ class TimeSystem {
 public:
     TimeSystem() : lastFrameTime_(Clock::now()) {}
 
-    void SetFixedDeltaTime(Seconds dt) {
-        time_.fixedDeltaTime = std::max(0.0001, dt);
-    }
+    void SetFixedDeltaTime(Seconds dt) { time_.fixedDeltaTime = std::max(0.0001, dt); }
 
     void Tick() {
         const auto now = Clock::now();
-        const std::chrono::duration<Seconds> elapsed = now - lastFrameTime_;
+        const Seconds realDelta = std::max(0.0, std::chrono::duration<Seconds>(now - lastFrameTime_).count());
         lastFrameTime_ = now;
-
         constexpr Seconds kMaxDeltaTime = 0.25;
-        const Seconds realDelta = std::max(0.0, elapsed.count());
-        const Seconds simulationDelta = std::min(realDelta, kMaxDeltaTime);
-
         time_.SetRealDeltaTime(realDelta);
-        time_.deltaTime = simulationDelta * time_.GetTimeScale();
+        time_.deltaTime = std::min(realDelta, kMaxDeltaTime) * time_.GetTimeScale();
         time_.totalTime += time_.deltaTime;
         ++time_.frameCount;
 
         frameTimes_.push_back(realDelta);
         if (frameTimes_.size() > 60) frameTimes_.erase(frameTimes_.begin());
-
-        Seconds avgTime = 0.0;
-        for (const Seconds t : frameTimes_) avgTime += t;
-        if (avgTime > 0.0) time_.fps = static_cast<float>(frameTimes_.size() / avgTime);
-
+        Seconds total = 0.0;
+        for (Seconds sample : frameTimes_) total += sample;
+        if (total > 0.0) time_.fps = static_cast<float>(frameTimes_.size() / total);
         fixedTimeAccumulator_ += time_.deltaTime;
     }
 
     bool ShouldFixedUpdate() const { return fixedTimeAccumulator_ >= time_.fixedDeltaTime; }
-
-        if (frameTimes_.size() > 60) {
-            frameTimes_.erase(frameTimes_.begin());
-        }
-
-        Seconds avgTime = 0.0;
-        for (const Seconds t : frameTimes_) avgTime += t;
-        if (avgTime > 0.0) {
-            time_.fps = static_cast<float>(frameTimes_.size() / avgTime);
-        }
-
-        fixedTimeAccumulator_ += time_.deltaTime;
-    }
-
-    bool ShouldFixedUpdate() const {
-        return fixedTimeAccumulator_ >= time_.fixedDeltaTime;
-    }
-
     bool ConsumeFixedStep() {
         if (!ShouldFixedUpdate()) return false;
         fixedTimeAccumulator_ -= time_.fixedDeltaTime;
         return true;
     }
-
     void DoFixedUpdate() { ConsumeFixedStep(); }
     const Time& GetTime() const { return time_; }
 
-    static Seconds Now() {
-        return std::chrono::duration<Seconds>(Clock::now().time_since_epoch()).count();
-    }
-
+    static Seconds Now() { return std::chrono::duration<Seconds>(Clock::now().time_since_epoch()).count(); }
     static void Sleep(Milliseconds ms) {
         if (ms > 0.0) std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(ms));
-
-    const Time& GetTime() const { return time_; }
-
-    static Seconds Now() {
-        const auto now = Clock::now();
-        return std::chrono::duration<Seconds>(now.time_since_epoch()).count();
-    }
-
-    static void Sleep(Milliseconds ms) {
-        if (ms > 0.0) {
-            std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(ms));
-        }
     }
 
 private:
     using Clock = std::chrono::steady_clock;
-    using TimePoint = Clock::time_point;
-
-    TimePoint lastFrameTime_;
+    TimePointAlias lastFrameTime_;
     Seconds fixedTimeAccumulator_ = 0.0;
     Time time_;
     std::vector<Seconds> frameTimes_;
+    using TimePointAlias = Clock::time_point;
 };
 
 enum class LogLevel { Trace = 0, Debug = 1, Info = 2, Warn = 3, Error = 4, Fatal = 5 };
@@ -132,42 +88,32 @@ using LogCallback = std::function<void(LogLevel, const std::string&)>;
 class Logger {
 public:
     static Logger& GetInstance() { static Logger instance; return instance; }
-    static Logger& GetInstance() {
-        static Logger instance;
-        return instance;
-    }
-
     void SetLevel(LogLevel level) { minLevel_ = level; }
     void SetCallback(LogCallback callback) { callback_ = std::move(callback); }
 
     void Log(LogLevel level, const std::string& message) {
         if (level < minLevel_) return;
-
-        std::string prefix;
+        const char* prefix = "[INFO]";
         switch (level) {
             case LogLevel::Trace: prefix = "[TRACE]"; break;
             case LogLevel::Debug: prefix = "[DEBUG]"; break;
-            case LogLevel::Info: prefix = "[INFO] "; break;
-            case LogLevel::Warn: prefix = "[WARN] "; break;
+            case LogLevel::Info: prefix = "[INFO]"; break;
+            case LogLevel::Warn: prefix = "[WARN]"; break;
             case LogLevel::Error: prefix = "[ERROR]"; break;
             case LogLevel::Fatal: prefix = "[FATAL]"; break;
         }
-
-        const std::string fullMessage = prefix + " " + message;
-        if (callback_) callback_(level, fullMessage);
-        else if (level >= LogLevel::Error) std::fprintf(stderr, "%s\n", fullMessage.c_str());
-        else std::printf("%s\n", fullMessage.c_str());
-
+        const std::string full = std::string(prefix) + " " + message;
+        if (callback_) callback_(level, full);
+        else if (level >= LogLevel::Error) std::fprintf(stderr, "%s\n", full.c_str());
+        else std::printf("%s\n", full.c_str());
         if (level == LogLevel::Fatal) std::abort();
     }
-
-    void Trace(const std::string& msg) { Log(LogLevel::Trace, msg); }
-    void Debug(const std::string& msg) { Log(LogLevel::Debug, msg); }
-    void Info(const std::string& msg) { Log(LogLevel::Info, msg); }
-    void Warn(const std::string& msg) { Log(LogLevel::Warn, msg); }
-    void Error(const std::string& msg) { Log(LogLevel::Error, msg); }
-    void Fatal(const std::string& msg) { Log(LogLevel::Fatal, msg); }
-
+    void Trace(const std::string& m) { Log(LogLevel::Trace, m); }
+    void Debug(const std::string& m) { Log(LogLevel::Debug, m); }
+    void Info(const std::string& m) { Log(LogLevel::Info, m); }
+    void Warn(const std::string& m) { Log(LogLevel::Warn, m); }
+    void Error(const std::string& m) { Log(LogLevel::Error, m); }
+    void Fatal(const std::string& m) { Log(LogLevel::Fatal, m); }
 private:
     Logger() = default;
     LogLevel minLevel_ = LogLevel::Info;
@@ -186,56 +132,26 @@ using Task = std::function<void()>;
 class TaskManager {
 public:
     static TaskManager& GetInstance() { static TaskManager instance; return instance; }
-    static TaskManager& GetInstance() {
-        static TaskManager instance;
-        return instance;
-    }
-
-    void AddTask(Task task) {
-        if (!task) return;
-        std::lock_guard<std::mutex> lock(mutex_);
-        tasks_.push_back(std::move(task));
-    }
-
-    void AddTaskDelayed(Task task, Seconds delay) {
-        if (!task) return;
-        std::lock_guard<std::mutex> lock(mutex_);
-        delayedTasks_.push_back({std::move(task), std::max(0.0, delay)});
-    }
+    void AddTask(Task task) { if (!task) return; std::lock_guard<std::mutex> lock(mutex_); tasks_.push_back(std::move(task)); }
+    void AddTaskDelayed(Task task, Seconds delay) { if (!task) return; std::lock_guard<std::mutex> lock(mutex_); delayedTasks_.push_back({std::move(task), std::max(0.0, delay)}); }
 
     void ProcessTasks(Seconds deltaTime) {
-        std::vector<Task> localTasks;
-        std::vector<Task> readyDelayedTasks;
+        std::vector<Task> immediate, ready;
         {
             std::lock_guard<std::mutex> lock(mutex_);
-            std::swap(localTasks, tasks_);
+            std::swap(immediate, tasks_);
             const Seconds dt = std::max(0.0, deltaTime);
             for (auto it = delayedTasks_.begin(); it != delayedTasks_.end();) {
                 it->delay -= dt;
-                if (it->delay <= 0.0) {
-                    readyDelayedTasks.push_back(std::move(it->task));
-                    it = delayedTasks_.erase(it);
-                } else ++it;
+                if (it->delay <= 0.0) { ready.push_back(std::move(it->task)); it = delayedTasks_.erase(it); }
+                else ++it;
             }
         }
-                } else {
-                    ++it;
-                }
-            }
-        }
-
-        for (auto& task : localTasks) if (task) task();
-        for (auto& task : readyDelayedTasks) if (task) task();
+        for (auto& task : immediate) if (task) task();
+        for (auto& task : ready) if (task) task();
     }
-
     void ProcessTasks() { ProcessTasks(0.0); }
-
-    void ClearTasks() {
-        std::lock_guard<std::mutex> lock(mutex_);
-        tasks_.clear();
-        delayedTasks_.clear();
-    }
-
+    void ClearTasks() { std::lock_guard<std::mutex> lock(mutex_); tasks_.clear(); delayedTasks_.clear(); }
 private:
     struct DelayedTask { Task task; Seconds delay; };
     std::vector<Task> tasks_;
@@ -251,7 +167,6 @@ public:
     virtual void Update(Seconds) {}
     virtual void FixedUpdate(Seconds) {}
     virtual void Render() {}
-
     int GetPriority() const { return priority_; }
     void SetPriority(int priority) { priority_ = priority; }
     bool IsEnabled() const { return enabled_; }
