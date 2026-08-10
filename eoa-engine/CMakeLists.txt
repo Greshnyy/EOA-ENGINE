@@ -25,6 +25,16 @@ endif()
 find_package(Vulkan REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(glm CONFIG QUIET)
+find_package(nlohmann_json CONFIG QUIET)
+
+if(NOT nlohmann_json_FOUND)
+    include(FetchContent)
+    FetchContent_Declare(
+        nlohmann_json
+        URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
+    )
+    FetchContent_MakeAvailable(nlohmann_json)
+endif()
 
 add_executable(eoa_engine
     src/main.cpp
@@ -62,7 +72,7 @@ add_executable(eoa_engine
 )
 
 target_include_directories(eoa_engine PRIVATE src third_party third_party/imgui third_party/imguizmo/src)
-target_link_libraries(eoa_engine PRIVATE Vulkan::Vulkan glfw)
+target_link_libraries(eoa_engine PRIVATE Vulkan::Vulkan glfw nlohmann_json::nlohmann_json)
 if(TARGET glm::glm)
     target_link_libraries(eoa_engine PRIVATE glm::glm)
 endif()
