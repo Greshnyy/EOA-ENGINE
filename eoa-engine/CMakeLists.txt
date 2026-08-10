@@ -77,7 +77,7 @@ if(TARGET glm::glm)
     target_link_libraries(eoa_engine PRIVATE glm::glm)
 endif()
 
-find_program(GLSLC glslc REQUIRED)
+find_program(GLSLC glslangValidator REQUIRED)
 file(GLOB SHADER_SOURCES ${CMAKE_SOURCE_DIR}/shaders/*.vert ${CMAKE_SOURCE_DIR}/shaders/*.frag)
 foreach(SHADER ${SHADER_SOURCES})
     get_filename_component(SHADER_NAME ${SHADER} NAME)
@@ -85,7 +85,7 @@ foreach(SHADER ${SHADER_SOURCES})
     add_custom_command(
         OUTPUT ${SPIRV}
         COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/shaders
-        COMMAND ${GLSLC} ${SHADER} -o ${SPIRV}
+        COMMAND ${GLSLC} -V ${SHADER} -o ${SPIRV}
         DEPENDS ${SHADER}
     )
     list(APPEND SPIRV_BINARY_FILES ${SPIRV})
