@@ -5,8 +5,6 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Дебаг-сборка по умолчанию с санитайзерами — страховка от тихих крашей,
-# раз чтение кода руками не подразумевается.
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
 endif()
@@ -22,7 +20,7 @@ endif()
 
 find_package(Vulkan REQUIRED)
 find_package(glfw3 REQUIRED)
-find_package(glm CONFIG QUIET) # vcpkg предоставляет CONFIG-пакет; на Linux apt-заголовки видны и без него
+find_package(glm CONFIG QUIET)
 
 add_executable(eoa_engine
     src/main.cpp
@@ -38,16 +36,15 @@ add_executable(eoa_engine
     src/renderer/mesh.cpp
     src/renderer/texture.cpp
     src/renderer/gltf_loader.cpp
-      src/renderer/particle_system.cpp
-      src/core/object.cpp
-      src/core/component.cpp
-      src/core/actor.cpp
-      src/core/transform_component.cpp
-      src/core/serializer.cpp
-      src/core/world.cpp
-      src/renderer/mesh_component.cpp
-      src/renderer/gbuffer.cpp
-      src/renderer/deferred_lighting.cpp
+    src/renderer/particle_system.cpp
+    src/core/object.cpp
+    src/core/component.cpp
+    src/core/actor.cpp
+    src/core/transform_component.cpp
+    src/core/serializer.cpp
+    src/renderer/mesh_component.cpp
+    src/renderer/gbuffer.cpp
+    src/renderer/deferred_lighting.cpp
     src/editor/editor.cpp
     src/vendor/stb_image_impl.cpp
     third_party/imgui/imgui.cpp
@@ -56,7 +53,7 @@ add_executable(eoa_engine
     third_party/imgui/imgui_tables.cpp
     third_party/imgui/imgui_impl_vulkan.cpp
     third_party/imgui/imgui_impl_glfw.cpp
-      third_party/imguizmo/src/ImGuizmo.cpp
+    third_party/imguizmo/src/ImGuizmo.cpp
 )
 
 target_include_directories(eoa_engine PRIVATE src third_party third_party/imgui third_party/imguizmo/src)
@@ -65,7 +62,6 @@ if(TARGET glm::glm)
     target_link_libraries(eoa_engine PRIVATE glm::glm)
 endif()
 
-# Компиляция шейдеров в SPIR-V при сборке
 find_program(GLSLC glslc REQUIRED)
 file(GLOB SHADER_SOURCES ${CMAKE_SOURCE_DIR}/shaders/*.vert ${CMAKE_SOURCE_DIR}/shaders/*.frag)
 foreach(SHADER ${SHADER_SOURCES})
@@ -82,16 +78,11 @@ endforeach()
 add_custom_target(shaders DEPENDS ${SPIRV_BINARY_FILES})
 add_dependencies(eoa_engine shaders)
 
-# Ассеты (текстуры и т.п.) копируются рядом с exe после каждой сборки —
-# запускать eoa_engine можно прямо из build/, без ручного копирования файлов.
 add_custom_command(TARGET eoa_engine POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_SOURCE_DIR}/assets ${CMAKE_BINARY_DIR}/assets
 )
 
-# MSVC-сборки с /fsanitize=address зависят от рантайм-DLL, лежащей рядом с cl.exe,
-# но не копируемой в выходной каталог автоматически — копируем сами, иначе exe
-# падает с "clang_rt.asan_dynamic-x86_64.dll was not found".
 if(MSVC AND CMAKE_BUILD_TYPE STREQUAL "Debug")
     get_filename_component(MSVC_TOOLS_BIN_DIR ${CMAKE_CXX_COMPILER} DIRECTORY)
     add_custom_command(TARGET eoa_engine POST_BUILD
