@@ -16,6 +16,7 @@
 #include "renderer/light_component.h"
 #include "renderer/gbuffer.h"
 #include "renderer/deferred_lighting.h"
+#include "renderer/shadow_pass.h"
 
 namespace eoa {
 
@@ -80,6 +81,9 @@ private:
     std::unique_ptr<DeferredLighting> deferredLighting_;
     std::unique_ptr<Pipeline> gbufferPipeline_;
 
+    // Shadow mapping
+    std::unique_ptr<ShadowPass> shadowPass_;
+
     VkBuffer lightArrayBuffer_ = VK_NULL_HANDLE;
     VkDeviceMemory lightArrayBufferMemory_ = VK_NULL_HANDLE;
     VkBuffer lightInfoBuffer_ = VK_NULL_HANDLE;
@@ -92,8 +96,10 @@ private:
 
     void CreateGBufferPipeline();
     void CreateDeferredLighting();
+    void CreateShadowPass();
     void CreateLightBuffers();
     void UpdateLightBuffers();
+    void RecordShadowPass(VkCommandBuffer cmd);
     void RecordGBufferPass(VkCommandBuffer cmd);
     void RecordDeferredPass(VkCommandBuffer cmd, uint32_t imageIndex);
     void CreateRenderPass();

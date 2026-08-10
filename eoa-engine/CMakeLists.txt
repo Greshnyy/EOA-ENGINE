@@ -45,6 +45,7 @@ add_executable(eoa_engine
     src/renderer/mesh_component.cpp
     src/renderer/gbuffer.cpp
     src/renderer/deferred_lighting.cpp
+    src/renderer/shadow_pass.cpp
     src/editor/editor.cpp
     src/vendor/stb_image_impl.cpp
     third_party/imgui/imgui.cpp
