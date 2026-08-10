@@ -27,6 +27,7 @@ struct Time {
 
     Seconds GetTimeScale() const { return timeScale_; }
     void SetTimeScale(Seconds scale) { timeScale_ = std::max(0.0, scale); }
+
     Seconds GetRealDeltaTime() const { return realDeltaTime_; }
     void SetRealDeltaTime(Seconds dt) { realDeltaTime_ = std::max(0.0, dt); }
 
@@ -69,6 +70,23 @@ public:
 
     bool ShouldFixedUpdate() const { return fixedTimeAccumulator_ >= time_.fixedDeltaTime; }
 
+        if (frameTimes_.size() > 60) {
+            frameTimes_.erase(frameTimes_.begin());
+        }
+
+        Seconds avgTime = 0.0;
+        for (const Seconds t : frameTimes_) avgTime += t;
+        if (avgTime > 0.0) {
+            time_.fps = static_cast<float>(frameTimes_.size() / avgTime);
+        }
+
+        fixedTimeAccumulator_ += time_.deltaTime;
+    }
+
+    bool ShouldFixedUpdate() const {
+        return fixedTimeAccumulator_ >= time_.fixedDeltaTime;
+    }
+
     bool ConsumeFixedStep() {
         if (!ShouldFixedUpdate()) return false;
         fixedTimeAccumulator_ -= time_.fixedDeltaTime;
@@ -84,11 +102,24 @@ public:
 
     static void Sleep(Milliseconds ms) {
         if (ms > 0.0) std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(ms));
+
+    const Time& GetTime() const { return time_; }
+
+    static Seconds Now() {
+        const auto now = Clock::now();
+        return std::chrono::duration<Seconds>(now.time_since_epoch()).count();
+    }
+
+    static void Sleep(Milliseconds ms) {
+        if (ms > 0.0) {
+            std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(ms));
+        }
     }
 
 private:
     using Clock = std::chrono::steady_clock;
     using TimePoint = Clock::time_point;
+
     TimePoint lastFrameTime_;
     Seconds fixedTimeAccumulator_ = 0.0;
     Time time_;
@@ -101,11 +132,17 @@ using LogCallback = std::function<void(LogLevel, const std::string&)>;
 class Logger {
 public:
     static Logger& GetInstance() { static Logger instance; return instance; }
+    static Logger& GetInstance() {
+        static Logger instance;
+        return instance;
+    }
+
     void SetLevel(LogLevel level) { minLevel_ = level; }
     void SetCallback(LogCallback callback) { callback_ = std::move(callback); }
 
     void Log(LogLevel level, const std::string& message) {
         if (level < minLevel_) return;
+
         std::string prefix;
         switch (level) {
             case LogLevel::Trace: prefix = "[TRACE]"; break;
@@ -115,10 +152,12 @@ public:
             case LogLevel::Error: prefix = "[ERROR]"; break;
             case LogLevel::Fatal: prefix = "[FATAL]"; break;
         }
+
         const std::string fullMessage = prefix + " " + message;
         if (callback_) callback_(level, fullMessage);
         else if (level >= LogLevel::Error) std::fprintf(stderr, "%s\n", fullMessage.c_str());
         else std::printf("%s\n", fullMessage.c_str());
+
         if (level == LogLevel::Fatal) std::abort();
     }
 
@@ -147,6 +186,10 @@ using Task = std::function<void()>;
 class TaskManager {
 public:
     static TaskManager& GetInstance() { static TaskManager instance; return instance; }
+    static TaskManager& GetInstance() {
+        static TaskManager instance;
+        return instance;
+    }
 
     void AddTask(Task task) {
         if (!task) return;
@@ -175,6 +218,12 @@ public:
                 } else ++it;
             }
         }
+                } else {
+                    ++it;
+                }
+            }
+        }
+
         for (auto& task : localTasks) if (task) task();
         for (auto& task : readyDelayedTasks) if (task) task();
     }
@@ -202,6 +251,7 @@ public:
     virtual void Update(Seconds) {}
     virtual void FixedUpdate(Seconds) {}
     virtual void Render() {}
+
     int GetPriority() const { return priority_; }
     void SetPriority(int priority) { priority_ = priority; }
     bool IsEnabled() const { return enabled_; }

@@ -11,6 +11,9 @@
 #include <algorithm>
 #include <any>
 #include <glm/glm.hpp>
+
+#include <algorithm>
+#include <any>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -44,6 +47,16 @@ public:
             return a->GetPriority() < b->GetPriority();
         });
         if (initialized_) system->Initialize();
+
+        std::sort(systems_.begin(), systems_.end(),
+            [](const auto& a, const auto& b) {
+                return a->GetPriority() < b->GetPriority();
+            });
+
+        if (initialized_) {
+            system->Initialize();
+        }
+
         return system.get();
     }
 
@@ -62,6 +75,9 @@ public:
 
     void Shutdown() {
         for (auto it = systems_.rbegin(); it != systems_.rend(); ++it) (*it)->Shutdown();
+        for (auto it = systems_.rbegin(); it != systems_.rend(); ++it) {
+            (*it)->Shutdown();
+        }
         systems_.clear();
         initialized_ = false;
     }
@@ -89,11 +105,22 @@ public:
     void OnEvent(Event&) override {}
     virtual void Init() {}
     virtual void Shutdown() {}
+
+    void OnEvent(Event&) override {
+        // Обработка событий на уровне приложения
+    }
+
+    virtual void Init() {}
+    virtual void Shutdown() {}
+
     virtual void OnLevelLoaded(const std::string& levelName) { (void)levelName; }
     virtual void OnLevelUnloaded(const std::string& levelName) { (void)levelName; }
 
     template<typename T>
     void SetState(const std::string& key, T value) { state_[key] = std::move(value); }
+    void SetState(const std::string& key, T value) {
+        state_[key] = std::move(value);
+    }
 
     template<typename T>
     T* GetState(const std::string& key) {
@@ -145,6 +172,18 @@ public:
 
         initialized_ = true;
         EOA_LOG_INFO("EOA Engine initialized successfully");
+
+        Logger::GetInstance().SetLevel(config.logLevel);
+
+        EOA_LOG_INFO("Инициализация EOA Engine...");
+        EOA_LOG_INFO("Название: " + config.title);
+        EOA_LOG_INFO("Разрешение: " + std::to_string(config.width) + "x" +
+                     std::to_string(config.height));
+
+        inputSystem_ = systemManager_.AddSystem<InputSystem>();
+        systemManager_.Initialize();
+
+        EOA_LOG_INFO("Движок успешно инициализирован");
         return true;
     }
 
@@ -162,6 +201,17 @@ public:
             ProcessEvents();
 
             if (inputSystem_) inputSystem_->BeginFrame();
+
+        EOA_LOG_INFO("Запуск главного цикла...");
+
+        while (running_) {
+            timeSystem_.Tick();
+
+            if (inputSystem_) {
+                inputSystem_->BeginFrame();
+            }
+
+            ProcessEvents();
             eventDispatcher_.DispatchPending();
             TaskManager::GetInstance().ProcessTasks(timeSystem_.GetTime().deltaTime);
 
@@ -183,6 +233,14 @@ public:
                     static_cast<uint32_t>(framebufferWidth),
                     static_cast<uint32_t>(framebufferHeight),
                     glm::mat4(1.0f));
+            systemManager_.Render();
+
+            if (config_.targetFPS > 0) {
+                const double frameTime = 1.0 / static_cast<double>(config_.targetFPS);
+                const double elapsed = timeSystem_.GetTime().realDeltaTime_;
+                if (elapsed < frameTime) {
+                    TimeSystem::Sleep((frameTime - elapsed) * 1000.0);
+                }
             }
 
             systemManager_.Render();
@@ -221,6 +279,9 @@ public:
         inputSystem_ = nullptr;
         initialized_ = false;
         EOA_LOG_INFO("EOA Engine stopped");
+        EOA_LOG_INFO("Остановка движка...");
+        systemManager_.Shutdown();
+        EOA_LOG_INFO("Движок остановлен");
     }
 
     EventDispatcher& GetEventDispatcher() { return eventDispatcher_; }
@@ -242,6 +303,9 @@ public:
 
     template<typename T>
     T* GetGameInstance() { return dynamic_cast<T*>(gameInstance_.get()); }
+    T* GetGameInstance() {
+        return dynamic_cast<T*>(gameInstance_.get());
+    }
 
     static Engine& Get() { return GetInstance(); }
     static EventDispatcher& Events() { return Get().GetEventDispatcher(); }
@@ -251,6 +315,8 @@ public:
 private:
     Engine() = default;
     ~Engine() { Shutdown(); }
+    ~Engine() = default;
+
     Engine(const Engine&) = delete;
     Engine& operator=(const Engine&) = delete;
 
