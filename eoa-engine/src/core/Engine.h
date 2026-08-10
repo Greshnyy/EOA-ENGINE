@@ -11,9 +11,6 @@
 #include <algorithm>
 #include <any>
 #include <glm/glm.hpp>
-
-#include <algorithm>
-#include <any>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -42,57 +39,36 @@ public:
     template<typename T, typename... Args>
     T* AddSystem(Args&&... args) {
         auto system = std::make_shared<T>(std::forward<Args>(args)...);
-        systems_.push_back(system);
-        std::sort(systems_.begin(), systems_.end(), [](const auto& a, const auto& b) {
+        systems_.push_back(std::move(system));
+        std::stable_sort(systems_.begin(), systems_.end(), [](const auto& a, const auto& b) {
             return a->GetPriority() < b->GetPriority();
         });
-        if (initialized_) system->Initialize();
-
-        std::sort(systems_.begin(), systems_.end(),
-            [](const auto& a, const auto& b) {
-                return a->GetPriority() < b->GetPriority();
-            });
-
-        if (initialized_) {
-            system->Initialize();
-        }
-
-        return system.get();
+        if (initialized_) systems_.back()->Initialize();
+        return dynamic_cast<T*>(systems_.back().get());
     }
 
     template<typename T>
     T* GetSystem() {
-        for (auto& sys : systems_) {
-            if (auto typed = std::dynamic_pointer_cast<T>(sys)) return typed.get();
-        }
+        for (auto& sys : systems_) if (auto typed = std::dynamic_pointer_cast<T>(sys)) return typed.get();
         return nullptr;
     }
 
     void Initialize() {
+        if (initialized_) return;
         for (auto& sys : systems_) sys->Initialize();
         initialized_ = true;
     }
 
     void Shutdown() {
+        if (!initialized_ && systems_.empty()) return;
         for (auto it = systems_.rbegin(); it != systems_.rend(); ++it) (*it)->Shutdown();
-        for (auto it = systems_.rbegin(); it != systems_.rend(); ++it) {
-            (*it)->Shutdown();
-        }
         systems_.clear();
         initialized_ = false;
     }
 
-    void Update(Seconds dt) {
-        for (auto& sys : systems_) if (sys->IsEnabled()) sys->Update(dt);
-    }
-
-    void FixedUpdate(Seconds dt) {
-        for (auto& sys : systems_) if (sys->IsEnabled()) sys->FixedUpdate(dt);
-    }
-
-    void Render() {
-        for (auto& sys : systems_) if (sys->IsEnabled()) sys->Render();
-    }
+    void Update(Seconds dt) { for (auto& sys : systems_) if (sys->IsEnabled()) sys->Update(dt); }
+    void FixedUpdate(Seconds dt) { for (auto& sys : systems_) if (sys->IsEnabled()) sys->FixedUpdate(dt); }
+    void Render() { for (auto& sys : systems_) if (sys->IsEnabled()) sys->Render(); }
 
 private:
     std::vector<std::shared_ptr<ISystem>> systems_;
@@ -105,22 +81,11 @@ public:
     void OnEvent(Event&) override {}
     virtual void Init() {}
     virtual void Shutdown() {}
-
-    void OnEvent(Event&) override {
-        // Обработка событий на уровне приложения
-    }
-
-    virtual void Init() {}
-    virtual void Shutdown() {}
-
-    virtual void OnLevelLoaded(const std::string& levelName) { (void)levelName; }
-    virtual void OnLevelUnloaded(const std::string& levelName) { (void)levelName; }
+    virtual void OnLevelLoaded(const std::string&) {}
+    virtual void OnLevelUnloaded(const std::string&) {}
 
     template<typename T>
     void SetState(const std::string& key, T value) { state_[key] = std::move(value); }
-    void SetState(const std::string& key, T value) {
-        state_[key] = std::move(value);
-    }
 
     template<typename T>
     T* GetState(const std::string& key) {
@@ -134,113 +99,61 @@ private:
 
 class Engine {
 public:
-    static Engine& GetInstance() {
-        static Engine instance;
-        return instance;
-    }
+    static Engine& GetInstance() { static Engine instance; return instance; }
 
     bool Initialize(const EngineConfig& config) {
-        if (initialized_) {
-            EOA_LOG_WARN("Engine is already initialized");
-            return true;
-        }
+        if (initialized_) return true;
 
         config_ = config;
         config_.width = std::max(1, config_.width);
         config_.height = std::max(1, config_.height);
         config_.fixedDeltaTime = std::max(0.0001, config_.fixedDeltaTime);
-
-        Logger::GetInstance().SetLevel(config_.logLevel);
         timeSystem_.SetFixedDeltaTime(config_.fixedDeltaTime);
-
-        EOA_LOG_INFO("Initializing EOA Engine...");
-        EOA_LOG_INFO("Window: " + std::to_string(config_.width) + "x" +
-                     std::to_string(config_.height));
+        Logger::GetInstance().SetLevel(config_.logLevel);
 
         window_ = std::make_unique<Window>(config_.width, config_.height, config_.title);
+        WireWindowEvents();
         instance_ = std::make_unique<VulkanInstance>(config_.enableVulkanValidation);
         surface_ = window_->CreateSurface(instance_->Handle());
         device_ = std::make_unique<VulkanDevice>(instance_->Handle(), surface_);
-        renderer_ = std::make_unique<Renderer>(
-            device_->Physical(), device_->Logical(), surface_,
-            device_->GraphicsQueueFamily(), device_->GraphicsQueue(),
-            static_cast<uint32_t>(config_.width), static_cast<uint32_t>(config_.height));
+        renderer_ = std::make_unique<Renderer>(device_->Physical(), device_->Logical(), surface_,
+                                                device_->GraphicsQueueFamily(), device_->GraphicsQueue(),
+                                                static_cast<uint32_t>(config_.width), static_cast<uint32_t>(config_.height));
 
         inputSystem_ = systemManager_.AddSystem<InputSystem>();
         eventDispatcher_.AddListener(inputSystem_);
         systemManager_.Initialize();
-
         initialized_ = true;
         EOA_LOG_INFO("EOA Engine initialized successfully");
-
-        Logger::GetInstance().SetLevel(config.logLevel);
-
-        EOA_LOG_INFO("Инициализация EOA Engine...");
-        EOA_LOG_INFO("Название: " + config.title);
-        EOA_LOG_INFO("Разрешение: " + std::to_string(config.width) + "x" +
-                     std::to_string(config.height));
-
-        inputSystem_ = systemManager_.AddSystem<InputSystem>();
-        systemManager_.Initialize();
-
-        EOA_LOG_INFO("Движок успешно инициализирован");
         return true;
     }
 
     void Run() {
-        if (!initialized_) {
-            EOA_LOG_ERROR("Engine::Run called before Initialize");
-            return;
-        }
-
+        if (!initialized_) return;
         running_ = true;
-        EOA_LOG_INFO("Starting main loop...");
 
         while (running_ && window_ && !window_->ShouldClose()) {
             timeSystem_.Tick();
-            ProcessEvents();
-
             if (inputSystem_) inputSystem_->BeginFrame();
-
-        EOA_LOG_INFO("Запуск главного цикла...");
-
-        while (running_) {
-            timeSystem_.Tick();
-
-            if (inputSystem_) {
-                inputSystem_->BeginFrame();
-            }
-
             ProcessEvents();
             eventDispatcher_.DispatchPending();
             TaskManager::GetInstance().ProcessTasks(timeSystem_.GetTime().deltaTime);
 
             if (config_.fixedTimestep) {
                 while (timeSystem_.ShouldFixedUpdate()) {
-                    timeSystem_.DoFixedUpdate();
+                    timeSystem_.ConsumeFixedStep();
                     systemManager_.FixedUpdate(config_.fixedDeltaTime);
                 }
             }
 
-            systemManager_.Update(timeSystem_.GetTime().deltaTime);
+            const Seconds dt = timeSystem_.GetTime().deltaTime;
+            systemManager_.Update(dt);
 
-            int framebufferWidth = 0;
-            int framebufferHeight = 0;
-            window_->FramebufferSize(framebufferWidth, framebufferHeight);
-            if (framebufferWidth > 0 && framebufferHeight > 0 && renderer_) {
-                renderer_->GetWorld().Tick(static_cast<float>(timeSystem_.GetTime().deltaTime));
-                renderer_->DrawFrame(
-                    static_cast<uint32_t>(framebufferWidth),
-                    static_cast<uint32_t>(framebufferHeight),
-                    glm::mat4(1.0f));
-            systemManager_.Render();
-
-            if (config_.targetFPS > 0) {
-                const double frameTime = 1.0 / static_cast<double>(config_.targetFPS);
-                const double elapsed = timeSystem_.GetTime().realDeltaTime_;
-                if (elapsed < frameTime) {
-                    TimeSystem::Sleep((frameTime - elapsed) * 1000.0);
-                }
+            int width = 0, height = 0;
+            window_->FramebufferSize(width, height);
+            if (renderer_ && width > 0 && height > 0) {
+                renderer_->GetWorld().Tick(static_cast<float>(dt));
+                renderer_->DrawFrame(static_cast<uint32_t>(width), static_cast<uint32_t>(height), glm::mat4(1.0f));
             }
 
             systemManager_.Render();
@@ -257,31 +170,24 @@ public:
 
     void Shutdown() {
         if (!initialized_) return;
-
-        EOA_LOG_INFO("Shutting down EOA Engine...");
         running_ = false;
-
         if (device_) vkDeviceWaitIdle(device_->Logical());
-        if (gameInstance_) gameInstance_->Shutdown();
+        if (gameInstance_) {
+            eventDispatcher_.RemoveListener(gameInstance_.get());
+            gameInstance_->Shutdown();
+            gameInstance_.reset();
+        }
+        if (inputSystem_) eventDispatcher_.RemoveListener(inputSystem_);
         systemManager_.Shutdown();
         TaskManager::GetInstance().ClearTasks();
-
-        // Reverse Vulkan ownership order: renderer -> device -> surface -> instance -> window.
         renderer_.reset();
         device_.reset();
-        if (surface_ != VK_NULL_HANDLE && instance_) {
-            vkDestroySurfaceKHR(instance_->Handle(), surface_, nullptr);
-        }
+        if (surface_ != VK_NULL_HANDLE && instance_) vkDestroySurfaceKHR(instance_->Handle(), surface_, nullptr);
         surface_ = VK_NULL_HANDLE;
         instance_.reset();
         window_.reset();
-
         inputSystem_ = nullptr;
         initialized_ = false;
-        EOA_LOG_INFO("EOA Engine stopped");
-        EOA_LOG_INFO("Остановка движка...");
-        systemManager_.Shutdown();
-        EOA_LOG_INFO("Движок остановлен");
     }
 
     EventDispatcher& GetEventDispatcher() { return eventDispatcher_; }
@@ -294,6 +200,10 @@ public:
 
     template<typename T>
     void SetGameInstance(std::unique_ptr<T> instance) {
+        if (gameInstance_) {
+            eventDispatcher_.RemoveListener(gameInstance_.get());
+            gameInstance_->Shutdown();
+        }
         gameInstance_ = std::move(instance);
         if (gameInstance_) {
             gameInstance_->Init();
@@ -303,9 +213,6 @@ public:
 
     template<typename T>
     T* GetGameInstance() { return dynamic_cast<T*>(gameInstance_.get()); }
-    T* GetGameInstance() {
-        return dynamic_cast<T*>(gameInstance_.get());
-    }
 
     static Engine& Get() { return GetInstance(); }
     static EventDispatcher& Events() { return Get().GetEventDispatcher(); }
@@ -315,38 +222,65 @@ public:
 private:
     Engine() = default;
     ~Engine() { Shutdown(); }
-    ~Engine() = default;
-
     Engine(const Engine&) = delete;
     Engine& operator=(const Engine&) = delete;
 
-    void ProcessEvents() {
-        if (!window_) return;
-        window_->PollEvents();
+    static int ModifiersFromGlfw(int mods) {
+        int result = 0;
+        if (mods & GLFW_MOD_SHIFT) result |= static_cast<int>(ModifierKey::Shift);
+        if (mods & GLFW_MOD_CONTROL) result |= static_cast<int>(ModifierKey::Control);
+        if (mods & GLFW_MOD_ALT) result |= static_cast<int>(ModifierKey::Alt);
+        if (mods & GLFW_MOD_SUPER) result |= static_cast<int>(ModifierKey::Super);
+        return result;
     }
 
+    void WireWindowEvents() {
+        window_->SetKeyCallback([this](int key, int action, int mods) {
+            const auto code = static_cast<KeyCode>(key);
+            if (action == GLFW_PRESS || action == GLFW_REPEAT) eventDispatcher_.Send<KeyPressedEvent>(code, action == GLFW_REPEAT ? 1 : 0, ModifiersFromGlfw(mods));
+            else if (action == GLFW_RELEASE) eventDispatcher_.Send<KeyReleasedEvent>(code);
+        });
+        window_->SetMouseMoveCallback([this](double x, double y) {
+            const float fx = static_cast<float>(x), fy = static_cast<float>(y);
+            const float dx = fx - lastMouseX_, dy = fy - lastMouseY_;
+            lastMouseX_ = fx; lastMouseY_ = fy;
+            eventDispatcher_.Send<MouseMovedEvent>(fx, fy, dx, dy);
+        });
+        window_->SetMouseScrollCallback([this](double x, double y) {
+            eventDispatcher_.Send<MouseScrolledEvent>(static_cast<float>(x), static_cast<float>(y));
+        });
+        window_->SetMouseButtonCallback([this](int button, int action, int mods) {
+            double x = 0.0, y = 0.0;
+            glfwGetCursorPos(window_->Handle(), &x, &y);
+            if (action == GLFW_PRESS) eventDispatcher_.Send<MouseButtonPressedEvent>(static_cast<MouseButton>(button), static_cast<float>(x), static_cast<float>(y), ModifiersFromGlfw(mods));
+            else if (action == GLFW_RELEASE) eventDispatcher_.Send<MouseButtonReleasedEvent>(static_cast<MouseButton>(button), static_cast<float>(x), static_cast<float>(y));
+        });
+        window_->SetFramebufferResizeCallback([this](int width, int height) {
+            eventDispatcher_.SendAsync<WindowResizeEvent>(width, height);
+        });
+    }
+
+    void ProcessEvents() { if (window_) window_->PollEvents(); }
     void LimitFrameRate() {
         if (config_.targetFPS <= 0) return;
-        const double targetFrame = 1.0 / static_cast<double>(config_.targetFPS);
+        const double target = 1.0 / static_cast<double>(config_.targetFPS);
         const double elapsed = timeSystem_.GetTime().GetRealDeltaTime();
-        if (elapsed < targetFrame) {
-            TimeSystem::Sleep((targetFrame - elapsed) * 1000.0);
-        }
+        if (elapsed < target) TimeSystem::Sleep((target - elapsed) * 1000.0);
     }
 
     EngineConfig config_;
     TimeSystem timeSystem_;
     SystemManager systemManager_;
     EventDispatcher eventDispatcher_;
-
     std::unique_ptr<Window> window_;
     std::unique_ptr<VulkanInstance> instance_;
     VkSurfaceKHR surface_ = VK_NULL_HANDLE;
     std::unique_ptr<VulkanDevice> device_;
     std::unique_ptr<Renderer> renderer_;
-
     InputSystem* inputSystem_ = nullptr;
     std::unique_ptr<GameInstance> gameInstance_;
+    float lastMouseX_ = 0.0f;
+    float lastMouseY_ = 0.0f;
     bool running_ = false;
     bool initialized_ = false;
 };
