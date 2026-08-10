@@ -9,6 +9,10 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
 endif()
 
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    add_compile_options(-fpermissive)
+endif()
+
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     if(MSVC)
         add_compile_options(/W4 /fsanitize=address /Zi /Od)
